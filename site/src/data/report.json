@@ -1,0 +1,178 @@
+{
+  "tag": "button.hand-button",
+  "source": "src/App.tsx:36:13",
+  "counts": {
+    "locked": 6,
+    "drift": 2
+  },
+  "axes": [
+    {
+      "name": "mode",
+      "variants": [
+        {
+          "label": "dark",
+          "active": false
+        },
+        {
+          "label": "light",
+          "active": true
+        }
+      ]
+    },
+    {
+      "name": "density",
+      "variants": [
+        {
+          "label": "high",
+          "active": false
+        },
+        {
+          "label": "low",
+          "active": false
+        },
+        {
+          "label": "medium",
+          "active": true
+        },
+        {
+          "label": "mobile",
+          "active": false
+        },
+        {
+          "label": "touch",
+          "active": false
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "prop": "height",
+      "value": "28px",
+      "kind": "locked",
+      "message": "28px is --salt-size-base at medium only. This element is locked to one density — it renders wrong at high, low, mobile, touch.",
+      "tokens": [
+        "--salt-size-base",
+        "--salt-spacing-350"
+      ],
+      "variants": [
+        {
+          "label": "high",
+          "value": "20px",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "low",
+          "value": "36px",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "medium",
+          "value": "28px",
+          "active": true,
+          "wrong": false
+        },
+        {
+          "label": "mobile",
+          "value": "44px",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "touch",
+          "value": "44px",
+          "active": false,
+          "wrong": true
+        }
+      ]
+    },
+    {
+      "prop": "background-color",
+      "value": "rgb(255, 255, 255)",
+      "kind": "locked",
+      "message": "rgb(255, 255, 255) is --salt-container-primary-background at light only. That token changes with mode — hardcoding it breaks dark.",
+      "tokens": [
+        "--salt-container-primary-background",
+        "--salt-editable-primary-background",
+        "--salt-editable-primary-background-hover"
+      ],
+      "variants": [
+        {
+          "label": "dark",
+          "value": "rgb(36, 37, 38)",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "light",
+          "value": "rgb(255, 255, 255)",
+          "active": true,
+          "wrong": false
+        }
+      ]
+    },
+    {
+      "prop": "padding (right, left)",
+      "value": "8px",
+      "kind": "locked",
+      "message": "8px is --salt-spacing-100 at medium only. This element is locked to one density — it renders wrong at high, low, touch.",
+      "tokens": [
+        "--salt-spacing-100",
+        "--salt-spacing-fixed-800",
+        "--salt-size-unit"
+      ],
+      "variants": [
+        {
+          "label": "high",
+          "value": "4px",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "low",
+          "value": "12px",
+          "active": false,
+          "wrong": true
+        },
+        {
+          "label": "medium",
+          "value": "8px",
+          "active": true,
+          "wrong": false
+        },
+        {
+          "label": "mobile",
+          "value": "8px",
+          "active": false,
+          "wrong": false
+        },
+        {
+          "label": "touch",
+          "value": "16px",
+          "active": false,
+          "wrong": true
+        }
+      ]
+    },
+    {
+      "prop": "border-color",
+      "value": "rgb(124, 124, 124)",
+      "kind": "drift",
+      "message": "rgb(124, 124, 124) matches no colour token; nearest is --salt-color-gray-100 at ΔE 0.021.",
+      "tokens": []
+    },
+    {
+      "prop": "border-width",
+      "value": "1px",
+      "kind": "drift",
+      "message": "1px is exactly --salt-size-divider-strokeWidth. Same value today, but it will not follow the token.",
+      "tokens": [
+        "--salt-size-divider-strokeWidth",
+        "--salt-size-separator-strokeWidth",
+        "--salt-size-border"
+      ]
+    }
+  ]
+}

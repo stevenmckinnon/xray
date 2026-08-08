@@ -1,0 +1,7 @@
+node_modules
+.next
+out
+public/xray-client.js
+*.tsbuildinfo
+next-env.d.ts
+hugeicons-migrate-backup-*

@@ -1,0 +1,1240 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   The page's own token layer.
+
+   This is not decoration — it is the fixture. Two real axes are declared here:
+   `[data-theme]` (blueprint / paper) and `[data-density]` (tight / regular /
+   loose). xray, running on this page, discovers both without being told, which
+   is the whole demonstration. Token names are deliberately semantic so xray's
+   own naming heuristics resolve them the way a person would.
+   ========================================================================== */
+
+/* --- theme axis: colour ---------------------------------------------------- */
+
+[data-theme='blueprint'] {
+  --surface-page: #0a0d12;
+  --surface-raised: #0f131a;
+  --surface-sunken: #070a0e;
+  --surface-accent: #7dd3fc;
+
+  --text-primary: #e6e9ef;
+  --text-muted: #98a2b3;
+  --text-faint: #5b6472;
+  --text-accent: #7dd3fc;
+  --text-on-accent: #06131c;
+
+  --text-locked: #fca5a5;
+  --text-offscale: #fbbf24;
+  --text-drift: #93c5fd;
+  --text-ok: #86efac;
+
+  --border-hairline: #1c2230;
+  --border-strong: #2b3341;
+  --border-accent: #35576b;
+
+  --grain-opacity: 0.035;
+  --grid-opacity: 0.55;
+  --shadow-panel: 0 24px 70px -20px rgb(0 0 0 / 0.85);
+}
+
+[data-theme='paper'] {
+  --surface-page: #f1eee6;
+  --surface-raised: #e8e4d9;
+  --surface-sunken: #dcd7c9;
+  --surface-accent: #0e6d94;
+
+  --text-primary: #13161b;
+  --text-muted: #4b5361;
+  --text-faint: #7e8797;
+  --text-accent: #0a5b7d;
+  --text-on-accent: #f6f4ee;
+
+  --text-locked: #a01f27;
+  --text-offscale: #8a5000;
+  --text-drift: #1d4e79;
+  --text-ok: #1c6238;
+
+  --border-hairline: #d6d0c1;
+  --border-strong: #b9b2a0;
+  --border-accent: #9dbccb;
+
+  --grain-opacity: 0.05;
+  --grid-opacity: 0.7;
+  --shadow-panel: 0 24px 60px -28px rgb(40 34 20 / 0.4);
+}
+
+/* --- density axis: dimension --------------------------------------------- */
+
+[data-density='tight'] {
+  --kbd-height: 17px;
+  --kbd-font-size: 10px;
+  --spacing-unit: 6px;
+  --spacing-gutter: 20px;
+  --control-height: 28px;
+  --text-size-body: 14px;
+  --radius-control: 2px;
+}
+
+[data-density='regular'] {
+  --kbd-height: 19px;
+  --kbd-font-size: 10.5px;
+  --spacing-unit: 8px;
+  --spacing-gutter: 32px;
+  --control-height: 36px;
+  --text-size-body: 16px;
+  --radius-control: 3px;
+}
+
+[data-density='loose'] {
+  --kbd-height: 22px;
+  --kbd-font-size: 11.5px;
+  --spacing-unit: 11px;
+  --spacing-gutter: 48px;
+  --control-height: 46px;
+  --text-size-body: 17px;
+  --radius-control: 5px;
+}
+
+/* --- constants ----------------------------------------------------------- */
+
+:root {
+  --spacing-2: calc(2 * var(--spacing-unit));
+  --spacing-3: calc(3 * var(--spacing-unit));
+  --spacing-4: calc(4 * var(--spacing-unit));
+  --spacing-6: calc(6 * var(--spacing-unit));
+  --spacing-10: calc(10 * var(--spacing-unit));
+
+  --measure: 62ch;
+  --page-max: 1240px;
+  --border-width-hairline: 1px;
+  /* The key's depth cue, heavier than a hairline on purpose. */
+  --border-width-key: 2px;
+}
+
+@theme inline {
+  --color-page: var(--surface-page);
+  --color-raised: var(--surface-raised);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--text-accent);
+  --color-hairline: var(--border-hairline);
+  --font-display: var(--font-archivo), ui-sans-serif, sans-serif;
+  --font-body: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
+
+* {
+  min-width: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-size-body);
+  line-height: 1.65;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition:
+    background-color 260ms ease,
+    color 260ms ease;
+}
+
+/* Blueprint grid, fading out down the page. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--border-hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-hairline) 1px, transparent 1px);
+  background-size: 104px 104px;
+  background-position: center top;
+  opacity: var(--grid-opacity);
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 20%, transparent 78%);
+}
+
+/* Paper grain: the thing that stops a flat dark page reading as a screenshot. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: var(--surface-accent);
+  color: var(--text-on-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   Type
+   ========================================================================== */
+
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.lede {
+  font-size: clamp(1.05rem, 0.6rem + 1vw, 1.35rem);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.prose-note {
+  color: var(--text-muted);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.prose-note strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ============================================================================
+   Layout
+   ========================================================================== */
+
+.shell {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 56px);
+}
+
+.section {
+  padding-block: clamp(64px, 9vw, 132px);
+  border-top: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-6);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 108;
+  font-weight: 650;
+  font-size: clamp(1.6rem, 1rem + 1.6vw, 2.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* ============================================================================
+   Dimension annotations — the page measuring itself
+   ========================================================================== */
+
+.dim-v {
+  position: relative;
+  width: 1px;
+  background: var(--border-accent);
+  align-self: stretch;
+  transform-origin: top;
+  animation: draw-v 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dim-v::before,
+.dim-v::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  width: 9px;
+  height: 1px;
+  background: var(--border-accent);
+}
+
+.dim-v::before {
+  top: 0;
+}
+
+.dim-v::after {
+  bottom: 0;
+}
+
+.dim-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+.dim-v .dim-label {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: left center;
+}
+
+.dim-h {
+  position: relative;
+  height: 1px;
+  background: var(--border-accent);
+  transform-origin: left;
+  animation: draw-h 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dim-h::before,
+.dim-h::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 1px;
+  height: 9px;
+  background: var(--border-accent);
+}
+
+.dim-h::before {
+  left: 0;
+}
+
+.dim-h::after {
+  right: 0;
+}
+
+.dim-h .dim-label {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
+}
+
+@keyframes draw-v {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes draw-h {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   Panel — the overlay, rebuilt so it stays crisp and follows the page theme
+   ========================================================================== */
+
+.panel {
+  border: var(--border-width-hairline) solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-panel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 11px;
+  border-bottom: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.panel-tag {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+
+.panel-src {
+  display: block;
+  padding: 7px 11px;
+  border-bottom: var(--border-width-hairline) solid var(--border-hairline);
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.panel-axes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 11px;
+  border-bottom: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.panel-chip {
+  border: var(--border-width-hairline) solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.panel-chip[data-on='true'] {
+  background: var(--surface-accent);
+  border-color: var(--surface-accent);
+  color: var(--text-on-accent);
+}
+
+.finding {
+  padding: 9px 11px;
+  border-bottom: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.finding:last-child {
+  border-bottom: 0;
+}
+
+.finding-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.finding-val {
+  color: var(--text-offscale);
+}
+
+.finding-msg {
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.finding-tokens {
+  color: var(--text-ok);
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+/* ============================================================================
+   Badges and variant tables — shared by the verdict cards
+   ========================================================================== */
+
+
+.badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 8.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: var(--border-width-hairline) solid currentColor;
+}
+
+.badge[data-kind='locked'] {
+  color: var(--text-locked);
+}
+
+.badge[data-kind='off-scale'] {
+  color: var(--text-offscale);
+}
+
+.badge[data-kind='drift'] {
+  color: var(--text-drift);
+}
+
+.badge[data-kind='ok'] {
+  color: var(--text-ok);
+}
+
+
+.variant-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.variant-table td {
+  padding: 1px 8px 1px 0;
+  color: var(--text-muted);
+}
+
+.variant-table td.v {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.variant-table tr[data-active='true'] td {
+  color: var(--text-accent);
+}
+
+.variant-table tr[data-wrong='true'] td.v {
+  color: var(--text-locked);
+}
+
+/* ============================================================================
+   Buttons and the install command
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-unit);
+  height: var(--control-height);
+  padding-inline: var(--spacing-2);
+  border-radius: var(--radius-control);
+  border: var(--border-width-hairline) solid var(--border-strong);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.btn:hover {
+  border-color: var(--text-accent);
+  color: var(--text-accent);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--surface-accent);
+  border-color: var(--surface-accent);
+  color: var(--text-on-accent);
+}
+
+.btn-primary:hover {
+  color: var(--text-on-accent);
+  filter: brightness(1.08);
+}
+
+/*
+  The install command. A single button the width of the field, because "click the
+  small word at the end" is a worse target than "click the command".
+*/
+.command {
+  --command-accent: var(--text-muted);
+
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  max-width: 34rem;
+  padding: 0;
+  border: var(--border-width-hairline) solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  font-family: var(--font-mono);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.command:hover {
+  --command-accent: var(--text-accent);
+  border-color: var(--border-accent);
+}
+
+.command[data-state='copied'] {
+  --command-accent: var(--text-ok);
+  border-color: var(--text-ok);
+}
+
+.command[data-state='failed'] {
+  --command-accent: var(--text-locked);
+  border-color: var(--text-locked);
+}
+
+/* The lit edge: the only thing that moves, and it reads at a glance. */
+.command-rule {
+  flex: none;
+  width: 3px;
+  background: var(--command-accent);
+  transition: background-color 180ms ease;
+}
+
+.command-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5ch;
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--spacing-2);
+  height: var(--control-height);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.command-text::-webkit-scrollbar {
+  display: none;
+}
+
+/* The flags are ceremony. The package name is the payload. */
+.command-dim {
+  color: var(--text-faint);
+}
+
+.command-pkg {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.command-action {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: var(--spacing-2);
+  border-left: var(--border-width-hairline) solid var(--border-hairline);
+  color: var(--command-accent);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.command-action-label {
+  min-width: 3.6em;
+}
+
+.command:focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+.command-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-ok);
+  min-height: 1em;
+}
+
+.command-status[data-state='failed'] {
+  color: var(--text-locked);
+}
+
+/* ============================================================================
+   Toggle groups — a single-choice control, so it behaves like a radio group
+   ========================================================================== */
+
+.instrument {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: var(--border-width-hairline) solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  padding: calc(var(--spacing-unit) / 2);
+}
+
+.instrument-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-inline: calc(var(--spacing-unit) / 1.5);
+}
+
+.switch {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 1px);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.switch:hover {
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--text-primary) 8%, transparent);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--surface-accent);
+  color: var(--text-on-accent);
+}
+
+/* ============================================================================
+   Hint — a quiet line, not a callout
+   ========================================================================== */
+
+.hint {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/*
+  A ghost affordance. It has to read as clickable without competing with the
+  install command directly above it, so the whole cue is a colour shift and an
+  underline that only exists on hover.
+*/
+.hint-action {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.hint-action-label {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 160ms ease;
+}
+
+.hint-action:hover {
+  color: var(--text-accent);
+}
+
+.hint-action:hover .hint-action-label,
+.hint-action:focus-visible .hint-action-label {
+  text-decoration-color: currentColor;
+}
+
+.hint-action:hover .kbd {
+  border-color: var(--border-accent);
+}
+
+/* Without hover there is no inspection, so do not offer the button. */
+.hint-no-hover {
+  display: none;
+}
+
+@media (hover: none) {
+  .hint-action {
+    display: none;
+  }
+
+  .hint-no-hover {
+    display: block;
+  }
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Mono, because on this page every measured or literal value is mono, and a
+     keystroke is a literal. shadcn's default `font-sans` reads as prose. */
+  font-family: var(--font-mono);
+  font-size: var(--kbd-font-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0;
+
+  height: var(--kbd-height);
+  min-width: var(--kbd-height);
+  padding-inline: calc(var(--spacing-unit) / 1.5);
+
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: var(--border-width-hairline) solid var(--border-strong);
+  /* The heavier bottom edge is the whole illusion: it reads as a key with depth
+     without resorting to a drop shadow. */
+  border-bottom-width: var(--border-width-key);
+  border-radius: var(--radius-control);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--text-primary) 8%, transparent);
+
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Single glyphs (⇧ ⌘ X) want to be square; words (Ctrl, Shift) want to breathe. */
+.kbd[data-glyph] {
+  padding-inline: 0;
+}
+
+.kbd svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* The cap is one step lighter than the page, which is what reads as raised. */
+
+/* ============================================================================
+   Cards / grids
+   ========================================================================== */
+
+.card {
+  border: var(--border-width-hairline) solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.card-kind {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 106;
+  font-weight: 620;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.card-body {
+  color: var(--text-muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.card-example {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  border-top: var(--border-width-hairline) dashed var(--border-hairline);
+  padding-top: var(--spacing-unit);
+  margin-top: auto;
+  word-break: break-all;
+}
+
+/* ============================================================================
+   Demo bench — the side-by-side that ends arguments
+   ========================================================================== */
+
+.bench {
+  border: var(--border-width-hairline) solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 7px,
+      color-mix(in oklab, var(--text-faint) 12%, transparent) 7px,
+      color-mix(in oklab, var(--text-faint) 12%, transparent) 8px
+    ),
+    var(--surface-sunken);
+  padding: var(--spacing-6) var(--spacing-3);
+
+  /*
+    A grid, not a flex row: the delta bracket has to land on the button tops
+    exactly. `align-items: end` puts both controls on one baseline so a height
+    difference is the only thing that can move.
+  */
+  display: grid;
+  grid-template-areas:
+    'left delta right'
+    'left-label delta-label right-label';
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  justify-items: center;
+  column-gap: var(--spacing-2);
+  row-gap: var(--spacing-unit);
+}
+
+.specimen-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+
+.specimen-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  transition: color 200ms ease;
+}
+
+.specimen-code[data-drifted='true'] {
+  color: var(--text-locked);
+}
+
+.specimen-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* --- the delta annotation ------------------------------------------------- */
+
+.delta {
+  position: relative;
+  width: 86px;
+  display: flex;
+  justify-content: center;
+}
+
+.delta-bracket {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--border-strong);
+  transition:
+    height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease;
+}
+
+.delta-bracket[data-drifted='true'] {
+  background: var(--text-locked);
+}
+
+/* Extension lines, the way a drawing marks the two edges being compared. */
+.delta-bracket::before,
+.delta-bracket::after {
+  content: '';
+  position: absolute;
+  left: -36px;
+  width: 73px;
+  height: 1px;
+  background: inherit;
+  opacity: 0.75;
+}
+
+.delta-bracket::before {
+  top: 0;
+}
+
+.delta-bracket::after {
+  bottom: 0;
+}
+
+.delta-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  white-space: nowrap;
+  transition: color 200ms ease;
+  align-self: start;
+}
+
+.delta-label[data-drifted='true'] {
+  color: var(--text-locked);
+}
+
+/* The tokenised control: follows density. */
+.btn-tokenised {
+  height: var(--control-height);
+  padding-inline: var(--spacing-2);
+  border-radius: var(--radius-control);
+  border: var(--border-width-hairline) solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: all 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+  The forked control. Every value below is a literal that happens to equal a
+  token at `regular` density — which is exactly the bug xray reports, and why
+  this button does not move when the density does. Left hardcoded on purpose:
+  hover it with the overlay open.
+*/
+.btn-forked {
+  height: 36px;
+  padding-inline: 16px;
+  border-radius: 3px;
+  border: 1px solid #2b3341;
+  background: #0f131a;
+  color: #e6e9ef;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* ============================================================================
+   Mechanism list
+   ========================================================================== */
+
+.beat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-3);
+  padding-block: var(--spacing-3);
+  border-top: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.beat:first-child {
+  border-top: 0;
+}
+
+.beat-n {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-accent);
+  padding-top: 6px;
+}
+
+.beat-title {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 106;
+  font-weight: 620;
+  font-size: 1.12rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.beat-body {
+  color: var(--text-muted);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.beat-body code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--text-primary) 7%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============================================================================
+   Entrance choreography — one orchestrated load, then get out of the way
+   ========================================================================== */
+
+.rise {
+  animation: rise 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stagger > * {
+  animation: rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 130ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 200ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 270ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 340ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 410ms;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 480ms;
+}
+.stagger > *:nth-child(8) {
+  animation-delay: 550ms;
+}
+
+/* ============================================================================
+   Verdict grid — four items, four cells, weighted by severity
+   ========================================================================== */
+
+.verdicts {
+  display: grid;
+  gap: var(--spacing-2);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .verdicts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'lead offscale drift'
+      'lead ok ok';
+  }
+
+  .card-lead {
+    grid-area: lead;
+  }
+
+  .verdicts > .card:nth-child(2) {
+    grid-area: offscale;
+  }
+
+  .verdicts > .card:nth-child(3) {
+    grid-area: drift;
+  }
+
+  .verdicts > .card:nth-child(4) {
+    grid-area: ok;
+  }
+}
+
+.card-lead {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--text-locked) 7%, transparent),
+      transparent 42%
+    ),
+    var(--surface-raised);
+  border-color: color-mix(in oklab, var(--text-locked) 28%, var(--border-hairline));
+}
+
+.card-kind {
+  margin-left: 0;
+  align-self: start;
+}
+
+/* Two swatches a hair apart: the card demonstrates its own verdict. */
+.swatch-pair {
+  display: flex;
+  border: var(--border-width-hairline) solid var(--border-hairline);
+  border-radius: 2px;
+  overflow: hidden;
+  height: 28px;
+  width: 92px;
+}
+
+.swatch {
+  flex: 1;
+}
+
+/* A hairline so it reads as two swatches that look identical, rather than one. */
+.swatch + .swatch {
+  border-left: var(--border-width-hairline) solid var(--border-strong);
+}
+
+/* ============================================================================
+   Limits — a definition list, because that is what it is
+   ========================================================================== */
+
+.limits {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.limits > div {
+  padding-block: var(--spacing-2);
+  border-top: var(--border-width-hairline) solid var(--border-hairline);
+}
+
+.limits > div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.limits dt {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.limits dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  max-width: 48ch;
+}

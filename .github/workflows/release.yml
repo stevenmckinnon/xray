@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# One release at a time. Two overlapping runs would race on the version PR.
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Changesets compares against the base branch, so it needs history.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          # Writes the .npmrc that lets `pnpm publish` use NODE_AUTH_TOKEN.
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      # Nothing ships unless the whole thing is green. `changesets/action` runs
+      # after these, so a red build blocks both the version PR and the publish.
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+      - name: Version or publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset:version
+          publish: pnpm release
+          title: 'chore: release'
+          commit: 'chore: release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Read version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        run: |
+          {
+            echo "### xray"
+            echo
+            if [ "${{ steps.changesets.outputs.published }}" = "true" ]; then
+              echo "Published \`${{ steps.version.outputs.version }}\` to npm."
+            else
+              echo "No publish this run. Version is \`${{ steps.version.outputs.version }}\`."
+              echo "If a release PR was opened or updated, merging it publishes."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

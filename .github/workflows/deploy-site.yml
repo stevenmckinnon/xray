@@ -63,6 +63,26 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: site
 
+      # "Project not found" is what Vercel returns for a malformed id as well as
+      # a missing one, so check the shape before blaming access. Lengths and
+      # prefix matches are safe to print; the values themselves stay masked.
+      - name: Validate Vercel configuration
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          echo "VERCEL_PROJECT_ID length: ${#VERCEL_PROJECT_ID} (expected 32)"
+          echo "VERCEL_ORG_ID length: ${#VERCEL_ORG_ID} (expected 29)"
+          case "$VERCEL_PROJECT_ID" in
+            prj_*) echo "project id prefix: ok" ;;
+            *) echo "project id prefix: WRONG, does not start with prj_" ;;
+          esac
+          case "$VERCEL_ORG_ID" in
+            team_*) echo "org id prefix: ok (team)" ;;
+            user_*) echo "org id prefix: ok (personal)" ;;
+            *) echo "org id prefix: WRONG, expected team_ or user_" ;;
+          esac
+          printf 'trailing whitespace in project id: '
+          case "$VERCEL_PROJECT_ID" in *[![:alnum:]_]) echo "YES" ;; *) echo "no" ;; esac
+
       - name: Pull Vercel environment
         if: steps.check.outputs.ready == 'true'
         run: pnpm dlx vercel@latest pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"

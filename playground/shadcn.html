@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>xray · oklch tokens</title>
+    <style>
+      /* A shadcn/Tailwind v4 style token set: one :root block, one .dark override,
+         values in oklch. No config given to xray — the dark axis is discovered. */
+      :root {
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.145 0 0);
+        --card: oklch(1 0 0);
+        --primary: oklch(0.205 0 0);
+        --primary-foreground: oklch(0.985 0 0);
+        --border: oklch(0.922 0 0);
+        --muted-foreground: oklch(0.556 0 0);
+        --radius: 10px;
+        --spacing-2: 8px;
+        --spacing-4: 16px;
+      }
+      .dark {
+        --background: oklch(0.145 0 0);
+        --foreground: oklch(0.985 0 0);
+        --card: oklch(0.205 0 0);
+        --primary: oklch(0.922 0 0);
+        --primary-foreground: oklch(0.205 0 0);
+        --border: oklch(0.269 0 0);
+        --muted-foreground: oklch(0.708 0 0);
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui, sans-serif;
+        background-color: var(--background);
+        color: var(--foreground);
+      }
+      .card {
+        padding: var(--spacing-4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background-color: var(--card);
+        max-width: 420px;
+      }
+      /* Hardcoded to the light palette. Correct today, invisible tomorrow. */
+      .cta {
+        padding: 8px 16px;
+        border: 0;
+        border-radius: 10px;
+        background-color: #343434;
+        color: #fbfbfb;
+        cursor: pointer;
+      }
+      .muted {
+        color: oklch(0.556 0 0);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" onclick="document.documentElement.classList.toggle('dark')">
+      toggle .dark
+    </button>
+    <div class="card" style="margin-top: 16px">
+      <p class="muted">Hardcoded greys below.</p>
+      <button class="cta" type="button">Continue</button>
+    </div>
+  </body>
+</html>

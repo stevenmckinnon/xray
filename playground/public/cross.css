@@ -1,0 +1,9 @@
+/* Served cross-origin. xray cannot read these rules, but the browser can
+   resolve the token — which is exactly the case that used to produce a false
+   "not declared anywhere" finding. */
+:root {
+  --cross-token: 8px;
+}
+.cross-origin-styled {
+  padding: 8px;
+}

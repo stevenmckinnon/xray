@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>xray · cross-origin sheet</title>
+    <link rel="stylesheet" href="/node_modules/@salt-ds/theme/css/theme.css" />
+    <link rel="stylesheet" href="http://localhost:5299/cross.css" />
+  </head>
+  <style>
+      /* Uses a token declared only in the unreadable sheet. */
+      .uses-cross-token {
+        padding: var(--cross-token);
+      }
+    </style>
+  <body class="salt-theme salt-density-medium" data-mode="light">
+    <div class="cross-origin-styled">Styled by a sheet xray cannot read.</div>
+    <div class="uses-cross-token">Padding from a token declared cross-origin.</div>
+  </body>
+</html>

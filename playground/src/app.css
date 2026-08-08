@@ -1,0 +1,107 @@
+/* A page that renders correctly at medium density in light mode, and is quietly
+   broken everywhere else. Every value below is real: 8px is --salt-spacing-100
+   at medium only, 28px is --salt-size-base at medium only, #161616 is
+   --salt-content-primary-foreground in light mode only. */
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background-color: #ffffff;
+  color: #161616;
+}
+
+.page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* The one every team has: forked because Button was 4px too tall. */
+.hand-button {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #7c7c7c;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #161616;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* The same button, tokenised. */
+.salt-button {
+  height: var(--salt-size-base);
+  padding: 0 var(--salt-spacing-100);
+  border: var(--salt-size-border) solid var(--salt-separable-borderColor);
+  border-radius: var(--salt-palette-corner-weak, 0);
+  background-color: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  font-size: var(--salt-text-fontSize);
+  cursor: pointer;
+}
+
+/* Off by a hair — nobody will ever see it, and no theme will ever reach it. */
+.nearly {
+  padding: 7px;
+  background-color: #fefefe;
+  border: 1px solid #7d7d7d;
+}
+
+/* A token that does not exist. Silently drops the declaration. */
+.typo {
+  padding: var(--salt-spacing-1000000);
+  color: var(--salt-content-primry-foreground);
+}
+
+/* Genuinely novel values: not drift, just not in the system. */
+.novel {
+  padding: 6px 12px;
+  background-color: #ff00aa;
+  border-radius: 11px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  background-color: #f7f7f7;
+}
+
+/* --- probe safety: selectors that break if xray inserts a stray sibling --- */
+.flexy {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #dcdcdc;
+}
+.flexy > *:last-child {
+  /* If a probe were appended as a sibling, this would stop applying. */
+  margin-left: 24px;
+}
+.flexy > :nth-child(2) {
+  font-weight: 700;
+}
+
+/* A container that overrides a token locally — the Salt override-hook pattern.
+   Probing inside the element must see 20px, not the theme's 8px. */
+.override {
+  --salt-spacing-100: 20px;
+  padding: var(--salt-spacing-100);
+  border: 1px solid #dcdcdc;
+}
+.override .child {
+  padding: 20px;
+}

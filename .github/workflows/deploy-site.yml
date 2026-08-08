@@ -83,6 +83,13 @@ jobs:
             user_*) echo "org id prefix: ok (personal)" ;;
             *) echo "org id prefix: WRONG, expected team_ or user_" ;;
           esac
+          echo "VERCEL_TOKEN length: ${#VERCEL_TOKEN}"
+          case "$VERCEL_TOKEN" in
+            *[[:space:]]*) echo "token contains whitespace: YES, that will break it" ;;
+            *\"*|*\'*) echo "token contains a quote: YES, that will break it" ;;
+            *) echo "token shape: no stray whitespace or quotes" ;;
+          esac
+
           # Fail here rather than letting Vercel report "Project not found",
           # which is the same message it gives for an id it cannot see.
           ok=true

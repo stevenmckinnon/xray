@@ -8,3 +8,4 @@ hugeicons-migrate-backup-*
 
 # `vercel link` writes project ids here, and `vercel pull` writes env files.
 .vercel
+.env*

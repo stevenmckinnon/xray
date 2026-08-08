@@ -3,6 +3,8 @@ name: Release
 on:
   push:
     branches: [main]
+  # Lets a failed run be retried without an empty commit.
+  workflow_dispatch:
 
 # One release at a time. Two overlapping runs would race on the version PR.
 concurrency: release-${{ github.ref }}

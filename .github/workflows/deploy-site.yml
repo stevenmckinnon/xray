@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Lets a failed run be retried without an empty commit.
+  workflow_dispatch:
 
 concurrency:
   group: deploy-site-${{ github.ref }}

@@ -189,6 +189,50 @@ xray({
 variant axes, loads this exact client bundle, and leaves one component hardcoded on
 purpose. Press `⇧⌘X` on it and you are inspecting the page with the tool it markets.
 
+## Releasing
+
+Versions are driven by [changesets](https://github.com/changesets/changesets). The
+flow has three steps and none of them involve editing a version by hand:
+
+```bash
+pnpm changeset          # describe the change and pick patch/minor/major
+```
+
+Commit that file with your work. When it lands on `main`, CI opens a release PR
+that bumps the version and writes the changelog. Merging *that* PR publishes to
+npm and deploys the site.
+
+If a change genuinely needs no release, `pnpm changeset add --empty` records that
+decision so CI stops asking.
+
+### What runs where
+
+| Workflow | Trigger | Does |
+|---|---|---|
+| `ci.yml` | PRs and `main` | Typecheck, tests, package build, site build. On PRs it also fails when no changeset is present. |
+| `release.yml` | `main` | Opens or updates the release PR, or publishes when the release PR merges. Gated behind the same checks. |
+| `deploy-site.yml` | PRs and `main` | Preview deploy per PR, production on `main`. |
+
+The site build always builds the package first, because the site copies
+`dist/client.js` into its own assets and runs the real engine on itself. A site
+built against a stale bundle would make the live demo quietly disagree with the
+released tool.
+
+### One-time setup
+
+Repository secrets:
+
+| Secret | For |
+|---|---|
+| `NPM_TOKEN` | Publishing. An automation token, so it works with 2FA enabled. |
+| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | Site deploys. From `vercel link` in `site/`, which writes the ids to `.vercel/project.json`. |
+
+The deploy workflow skips itself rather than failing while the Vercel secrets are
+unset, so nothing goes red before the project exists.
+
+The npm account must own the `@stevenmckinnon` scope, and `publishConfig.access`
+is set to `public` because scoped packages default to restricted.
+
 ## Console API
 
 ```js

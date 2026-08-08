@@ -1,0 +1,90 @@
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: deploy-site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Production on main, a preview URL on every pull request.
+      TARGET: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+    steps:
+      # Skip rather than fail while the secrets are still unset, so the badge
+      # does not go red before the project exists.
+      - name: Check configuration
+        id: check
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Vercel secrets are not set, so the deploy was skipped." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+
+      - uses: pnpm/action-setup@v4
+        if: steps.check.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The package must be built before the site, because the site copies
+      # dist/client.js into its public assets and runs the real engine on itself.
+      # Deploying a site built against a stale bundle would make the live demo
+      # quietly disagree with the released tool.
+      - name: Build the package
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Install the site
+        if: steps.check.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+        working-directory: site
+
+      - name: Pull Vercel environment
+        if: steps.check.outputs.ready == 'true'
+        run: pnpm dlx vercel@latest pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+        working-directory: site
+
+      - name: Build
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          if [ "$TARGET" = "production" ]; then
+            pnpm dlx vercel@latest build --prod --token="$VERCEL_TOKEN"
+          else
+            pnpm dlx vercel@latest build --token="$VERCEL_TOKEN"
+          fi
+        working-directory: site
+
+      - name: Deploy
+        id: deploy
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          if [ "$TARGET" = "production" ]; then
+            url=$(pnpm dlx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          else
+            url=$(pnpm dlx vercel@latest deploy --prebuilt --token="$VERCEL_TOKEN")
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed $TARGET to $url" >> "$GITHUB_STEP_SUMMARY"
+        working-directory: site

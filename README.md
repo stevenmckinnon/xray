@@ -211,12 +211,10 @@ decision so CI stops asking.
 |---|---|---|
 | `ci.yml` | PRs and `main` | Typecheck, tests, package build, site build. On PRs it also fails when no changeset is present. |
 | `release.yml` | `main` | Opens or updates the release PR, or publishes when the release PR merges. Gated behind the same checks. |
-| `deploy-site.yml` | PRs and `main` | Preview deploy per PR, production on `main`. |
 
-The site build always builds the package first, because the site copies
-`dist/client.js` into its own assets and runs the real engine on itself. A site
-built against a stale bundle would make the live demo quietly disagree with the
-released tool.
+The site runs the real engine on itself, and copies the client bundle out of the
+installed package rather than a sibling build, so the live demo is exactly what a
+user installing xray would get.
 
 ### One-time setup
 
@@ -251,13 +249,14 @@ and npm >= 11.5.1 (Node 22 ships npm 10, so the workflow upgrades npm first).
 
 ### Site deploys
 
-| Secret | From |
-|---|---|
-| `VERCEL_TOKEN` | vercel.com, Settings then Tokens |
-| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `vercel link` in `site/`, which writes them to `.vercel/project.json` |
+The site is not deployed from CI. It depends on the published package like any
+other consumer, so it has no build-time relationship with this repo and any
+static host can build it: connect the repository, set the root directory to
+`site`, done. No tokens, no ids.
 
-The deploy workflow skips itself rather than failing while these are unset, so
-nothing goes red before the project exists.
+The consequence worth knowing: the site tracks the last *release*, not the last
+commit. A package change shows up on the site once it is published and the site's
+dependency is bumped.
 
 ## Console API
 

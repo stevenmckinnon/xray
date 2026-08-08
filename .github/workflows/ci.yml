@@ -44,10 +44,9 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # The site embeds the client bundle, so the package is built first.
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-
+      # The site consumes the published package like any other dependency, so it
+      # no longer needs the sibling build. That is also what lets Vercel build it
+      # straight from the repo with no configuration.
       - run: pnpm install --frozen-lockfile
         working-directory: site
       - run: pnpm exec tsc --noEmit

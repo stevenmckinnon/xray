@@ -8,8 +8,8 @@ npm run dev     # http://localhost:5300
 npm run build   # static export to out/
 ```
 
-`predev` / `prebuild` copy `../dist/client.js` into `public/xray-client.js`, so run
-`pnpm build` in the repo root first.
+`predev` / `prebuild` copy the client bundle out of `node_modules` into
+`public/xray-client.js`.
 
 ## The page is the fixture
 

@@ -220,18 +220,44 @@ released tool.
 
 ### One-time setup
 
-Repository secrets:
+**Publishing uses trusted publishing (OIDC), not a token.** npm is
+[deprecating 2FA-bypass tokens](https://github.blog/changelog/2026-07-08-npm-install-time-security-and-gat-bypass2fa-deprecation/):
+they stop bypassing 2FA for account changes in August 2026 and lose direct
+publishing around January 2027. So there is no `NPM_TOKEN` anywhere in this repo.
+`release.yml` authenticates with the OIDC token minted by `id-token: write`, and
+npm attaches provenance attestations automatically.
 
-| Secret | For |
+Trusted publishing is configured per package, on a package that already exists,
+so the very first publish has to come from a laptop. Once:
+
+```bash
+pnpm changeset:version   # 0.0.1 -> 0.1.0, writes CHANGELOG.md
+pnpm release             # builds, then publishes with an interactive 2FA prompt
+```
+
+Commit that, then on npmjs.com open the package's **Settings → Trusted
+publisher** and add:
+
+| Field | Value |
 |---|---|
-| `NPM_TOKEN` | Publishing. An automation token, so it works with 2FA enabled. |
-| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | Site deploys. From `vercel link` in `site/`, which writes the ids to `.vercel/project.json`. |
+| Provider | GitHub Actions |
+| Repository | `stevenmckinnon/xray` |
+| Workflow | `release.yml` |
 
-The deploy workflow skips itself rather than failing while the Vercel secrets are
-unset, so nothing goes red before the project exists.
+Every release after that is automatic: changeset, release PR, merge, published.
 
-The npm account must own the `@stevenmckinnon` scope, and `publishConfig.access`
-is set to `public` because scoped packages default to restricted.
+Requirements the workflow already satisfies: `id-token: write`, Node >= 22.14,
+and npm >= 11.5.1 (Node 22 ships npm 10, so the workflow upgrades npm first).
+
+### Site deploys
+
+| Secret | From |
+|---|---|
+| `VERCEL_TOKEN` | vercel.com, Settings then Tokens |
+| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `vercel link` in `site/`, which writes them to `.vercel/project.json` |
+
+The deploy workflow skips itself rather than failing while these are unset, so
+nothing goes red before the project exists.
 
 ## Console API
 

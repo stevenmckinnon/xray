@@ -28,10 +28,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
+          # Trusted publishing needs Node >= 22.14, and 22 resolves to the
+          # latest 22.x.
           node-version: 22
           cache: pnpm
-          # Writes the .npmrc that lets `pnpm publish` use NODE_AUTH_TOKEN.
           registry-url: https://registry.npmjs.org
+
+      # Node 22 ships npm 10, which predates OIDC. Trusted publishing needs
+      # npm >= 11.5.1, so upgrade before anything tries to publish.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
 
       - run: pnpm install --frozen-lockfile
 
@@ -50,8 +56,10 @@ jobs:
           title: 'chore: release'
           commit: 'chore: release'
         env:
+          # No npm token. Publishing authenticates with the OIDC token minted by
+          # `id-token: write`, which is why npm's 2FA-bypass token deprecation
+          # does not apply here. Provenance attestations come for free.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Read version
         id: version

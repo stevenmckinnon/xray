@@ -80,8 +80,15 @@ jobs:
             user_*) echo "org id prefix: ok (personal)" ;;
             *) echo "org id prefix: WRONG, expected team_ or user_" ;;
           esac
-          printf 'trailing whitespace in project id: '
-          case "$VERCEL_PROJECT_ID" in *[![:alnum:]_]) echo "YES" ;; *) echo "no" ;; esac
+          # Fail here rather than letting Vercel report "Project not found",
+          # which is the same message it gives for an id it cannot see.
+          ok=true
+          case "$VERCEL_PROJECT_ID" in prj_*) ;; *) ok=false ;; esac
+          case "$VERCEL_ORG_ID" in team_*|user_*) ;; *) ok=false ;; esac
+          if [ "$ok" = false ]; then
+            echo "::error::The Vercel ids are malformed. Set them from the linked project rather than by hand: gh secret set VERCEL_PROJECT_ID --body \"\$(node -p \"require('./.vercel/project.json').projectId\")\""
+            exit 1
+          fi
 
       - name: Pull Vercel environment
         if: steps.check.outputs.ready == 'true'

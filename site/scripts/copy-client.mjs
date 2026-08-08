@@ -4,7 +4,7 @@
  * The landing page runs the actual engine on itself, so there is nothing to keep
  * in sync by hand — and no chance of the demo drifting from the tool.
  */
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,5 +16,10 @@ if (!existsSync(from)) {
   console.error(`\n  Missing ${from}\n  Run \`pnpm build\` in the xray root first.\n`);
   process.exit(1);
 }
+// public/ holds nothing but this generated file, so git does not track the
+// directory and a fresh checkout does not have it. Without this, copyFileSync
+// fails with an ENOENT that names the *source* path and sends you looking in
+// entirely the wrong place.
+mkdirSync(dirname(to), { recursive: true });
 copyFileSync(from, to);
 console.log(`copied xray client → public/xray-client.js`);

@@ -212,3 +212,51 @@ describe('discoverAxes — small axes', () => {
     expect(axes.some((a) => a.variants.some((v) => v.raw === '.is-loading'))).toBe(false);
   });
 });
+
+describe('discoverAxes — escaped class names', () => {
+  /**
+   * Tailwind escapes the punctuation in its variant classes. A pattern that stops
+   * at the backslash read `.md\:ms-4` as a class called `md`, so unrelated
+   * selectors collapsed into one condition and a page using Tailwind grew an `md`
+   * axis that exists nowhere in its stylesheet.
+   */
+  it('does not invent an axis from responsive variant classes', () => {
+    const axes = discoverAxes(
+      collected([
+        [':root', { '--gap': '8px', '--pad': '8px', '--lead': '1.4' }],
+        ['.md\\:gap-4', { '--gap': '16px' }],
+        ['.md\\:p-4', { '--pad': '16px' }],
+        ['.md\\:leading-6', { '--lead': '1.6' }],
+      ]),
+      // Even at the permissive setting, three unrelated classes are not one axis.
+      1,
+    );
+    expect(axes.map((a) => a.name)).not.toContain('md');
+  });
+
+  it('keeps the escaped form for matching and the plain form for the label', () => {
+    const axes = discoverAxes(
+      collected([
+        [':root', { '--a': '1px', '--b': '2px', '--c': '3px' }],
+        ['.theme\\:dark', { '--a': '9px', '--b': '9px', '--c': '9px' }],
+      ]),
+      2,
+    );
+    const variant = axes[0]?.variants.find((v) => v.kind === 'class');
+    expect(variant?.raw).toBe('.theme\\:dark');
+    expect(variant?.name).toBe('theme:dark');
+  });
+
+  it('still reads an ordinary class', () => {
+    const axes = discoverAxes(
+      collected([
+        [':root', { '--a': '1px', '--b': '2px', '--c': '3px' }],
+        ['.dark', { '--a': '9px', '--b': '9px', '--c': '9px' }],
+      ]),
+      2,
+    );
+    const variant = axes[0]?.variants.find((v) => v.kind === 'class');
+    expect(variant?.raw).toBe('.dark');
+    expect(variant?.name).toBe('dark');
+  });
+});

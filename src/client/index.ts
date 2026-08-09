@@ -234,7 +234,11 @@ class Xray {
     if (this.options.axes) return []; // axes were configured; nothing was inferred
     const collected = this.document;
     const kept = new Set((this.resolver?.axes ?? []).map((a) => a.name));
-    return discoverAxes(collected, 1)
+    // From 2, not 1. A condition moving a single token is what the threshold
+    // exists to reject and is never the near miss anyone wants to know about — and
+    // on a Tailwind page there are dozens of them, which buried the one entry that
+    // mattered under `shadow`, `blur` and `duration`.
+    return discoverAxes(collected, 2)
       .filter((a) => !kept.has(a.name) && a.tokens.size < this.options.axisMinTokens)
       .map((a) => ({ name: a.name, variants: a.variants.map((v) => v.label), tokens: a.tokens.size }));
   }

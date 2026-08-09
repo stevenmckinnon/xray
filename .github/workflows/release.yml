@@ -67,6 +67,57 @@ jobs:
         id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
+      # The site installs xray from the registry like any other consumer, and
+      # both CI and the host build it with a frozen lockfile. Nothing here
+      # updates that lockfile on its own, so without this step every release
+      # would leave the live demo running the previous version's client.
+      - name: Point the site at the new release
+        if: steps.changesets.outputs.published == 'true'
+        working-directory: site
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # `npm publish` returns before the new version is reliably readable,
+          # and an install that runs too early resolves the old one and succeeds.
+          for _ in $(seq 1 30); do
+            npm view "@stevenmckinnon/xray@$VERSION" version >/dev/null 2>&1 && break
+            sleep 5
+          done
+          npm view "@stevenmckinnon/xray@$VERSION" version
+
+          pnpm add -D "@stevenmckinnon/xray@^$VERSION"
+
+      # This is the real check on the bump: the site's build copies the client
+      # bundle out of the freshly installed package, so a release that breaks the
+      # demo fails here rather than on the deployed site.
+      - name: Build the site against the new release
+        if: steps.changesets.outputs.published == 'true'
+        working-directory: site
+        run: |
+          pnpm exec tsc --noEmit
+          pnpm build
+
+      - name: Commit the site bump
+        id: site
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git diff --quiet -- site; then
+            echo "The site is already on $VERSION."
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/package.json site/pnpm-lock.yaml
+          # Deliberately no `[skip ci]`. The steps above already cover what CI
+          # would check, but the host's Git integration honours that keyword too,
+          # and skipping the deploy is the one thing this commit exists to do.
+          git commit -m "chore: point the site at xray $VERSION"
+          git push
+          echo "bumped=true" >> "$GITHUB_OUTPUT"
+
       - name: Summary
         run: |
           {
@@ -74,6 +125,11 @@ jobs:
             echo
             if [ "${{ steps.changesets.outputs.published }}" = "true" ]; then
               echo "Published \`${{ steps.version.outputs.version }}\` to npm."
+              if [ "${{ steps.site.outputs.bumped }}" = "true" ]; then
+                echo "Pointed the site at it, which deploys on push."
+              else
+                echo "The site was already on this version."
+              fi
             else
               echo "No publish this run. Version is \`${{ steps.version.outputs.version }}\`."
               echo "If a release PR was opened or updated, merging it publishes."

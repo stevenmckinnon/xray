@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The changeset check below diffs against the base branch, and a
+          # shallow clone does not contain it at any depth.
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -30,7 +34,9 @@ jobs:
       # A release needs either a changeset or a deliberate empty one. Catching
       # that on the PR is much cheaper than noticing after merge.
       - name: Changeset present
-        if: github.event_name == 'pull_request'
+        # The release PR is the one PR that legitimately has none, because
+        # versioning consumes them. Checking it there would fail every release.
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
         run: pnpm changeset status --since=origin/${{ github.base_ref }}
 
   site:

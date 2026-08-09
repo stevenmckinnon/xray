@@ -35,6 +35,8 @@ border-width      1px                                            DRIFT
 
 Every other token linter works on source text, so it can tell you that `padding: 8px` isn't a `var()`. None of them can tell you that `8px` **is** `--salt-spacing-100`, that the token resolves to four different values across four densities, and that this element is therefore correct at exactly one of them. That needs the cascade resolved, which needs a browser.
 
+**[xray-styles.vercel.app](https://xray-styles.vercel.app)** runs xray on itself — the page has its own theme and density axes, so you can inspect it and watch it find them.
+
 ## Install
 
 ```bash

@@ -51,6 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-theme="blueprint"
       data-density="regular"
       className={`${archivo.variable} ${newsreader.variable} ${plexMono.variable}`}
+      // Fumadocs' provider on /docs uses next-themes, which sets `color-scheme`
+      // on this element from the client. Two theme systems own <html> — this
+      // page's `data-theme` axis and that one — so the first client render
+      // legitimately differs from the server's, and React needs telling.
+      suppressHydrationWarning
     >
       <body>
         {children}

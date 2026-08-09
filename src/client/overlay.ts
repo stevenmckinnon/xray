@@ -1,6 +1,7 @@
 /** The overlay: a highlight box, a findings panel, and a way to flip variants. */
 
 import type { ElementReport, Finding, Severity } from './analyse.js';
+import { placePanel } from './placement.js';
 import { activeVariant, type TokenResolver } from './tokens.js';
 
 const esc = (s: string) =>
@@ -18,24 +19,34 @@ const CSS = `
 * { box-sizing: border-box; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .box {
   position: fixed;
+  left: 0;
+  top: 0;
   pointer-events: none;
   z-index: 2147483646;
   border: 1px solid #7dd3fc;
   background: rgba(125, 211, 252, 0.12);
-  border-radius: 2px;
-  transition: all 60ms linear;
+  border-radius: 3px;
+  /* Named properties, never "all". Animating everything would include colour and
+     border, which is work for nothing on an element that moves every frame. */
+  transition: transform 60ms linear, width 60ms linear, height 60ms linear;
 }
 .panel {
   position: fixed;
   z-index: 2147483647;
   width: 420px;
-  max-height: 70vh;
   overflow: auto;
+  overscroll-behavior: contain;
   background: #0b0e14;
   color: #d7dae0;
   border: 1px solid #262c38;
-  border-radius: 8px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+  /* Layered rather than one big blur: a tight shadow for the contact edge and a
+     wide one for the cast, so the panel reads as floating above arbitrary page
+     content instead of having a grey halo. */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 16px -6px rgba(0, 0, 0, 0.5),
+    0 24px 48px -12px rgba(0, 0, 0, 0.55);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -59,8 +70,13 @@ header .hint { color: #5b6472; font-size: 10px; }
   border: 1px solid #262c38; background: #11151d; color: #9aa4b2;
   border-radius: 999px; padding: 1px 7px; font-size: 10px; cursor: pointer;
   font-family: inherit;
+  transition: border-color 100ms ease-out, color 100ms ease-out, background-color 100ms ease-out, scale 100ms ease-out;
 }
 .chip:hover { border-color: #7dd3fc; color: #d7dae0; }
+/* Flipping an axis is the one destructive-feeling thing in here, so the control
+   should confirm the press physically as well as by changing state. */
+.chip:active { scale: 0.96; }
+.chip:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 1px; }
 .chip[aria-pressed='true'] { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
 .finding { padding: 8px 10px; border-bottom: 1px solid #141922; }
 .finding:last-child { border-bottom: 0; }
@@ -97,6 +113,8 @@ tr.unset td.v { color: #4b5563; font-style: italic; }
 
 export interface OverlayHost {
   show(report: ElementReport, rect: DOMRect, el: Element): void;
+  /** Follow an element that moved, without re-analysing or re-rendering it. */
+  reposition(rect: DOMRect): void;
   /** Something went wrong analysing this element; say so instead of vanishing. */
   showError(message: string, rect: DOMRect): void;
   hide(): void;
@@ -120,40 +138,64 @@ export function createOverlay(resolver: TokenResolver, onFlip: () => void): Over
   root.append(style, box, panel);
   document.body.appendChild(host);
 
+  const MARGIN = 12;
+
   /**
-   * Dock to whichever edge the inspected element uses least, rather than sitting
-   * beside it. Beside-the-element placement covers the thing you are looking at
-   * as soon as the element is wide, which is most of the time.
+   * Anchor the panel to the element rather than to a screen edge.
+   *
+   * The old version docked to whichever edge the element was furthest from. That
+   * never covered the element, but it never looked connected to it either — you
+   * would hover something on the left and read about it on the right.
+   *
+   * The panel's own height is measured, not assumed. The old code clamped `top`
+   * against a hardcoded 260px guess while letting the panel grow to 70vh, so on an
+   * element near the bottom of the page it ran off the screen by the difference.
+   * The geometry now lives in `placePanel`, where it is tested.
    */
   const place = (rect: DOMRect) => {
-    const margin = 12;
-    const width = 420;
-    const centre = rect.left + rect.width / 2;
-    const dockRight = centre < window.innerWidth / 2;
-    panel.style.left = dockRight ? `${window.innerWidth - width - margin}px` : `${margin}px`;
-    panel.style.top = `${Math.min(Math.max(margin, rect.top), Math.max(margin, window.innerHeight - 260))}px`;
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    // Cap before measuring. 70vh stops the panel dominating the page, and the
+    // viewport cap keeps that promise on a short window.
+    panel.style.maxHeight = `${Math.min(viewport.height * 0.7, viewport.height - MARGIN * 2)}px`;
+    const size = { width: panel.offsetWidth, height: panel.offsetHeight };
+    const { left, top } = placePanel(rect, size, viewport, MARGIN);
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+  };
+
+  const outline = (rect: DOMRect) => {
+    box.hidden = false;
+    // Translating rather than setting left/top: transform is composited, and this
+    // element moves on every pointer move.
+    box.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`;
+    box.style.width = `${rect.width}px`;
+    box.style.height = `${rect.height}px`;
   };
 
   return {
     root,
     show(report, rect, el) {
-      box.hidden = false;
-      box.style.left = `${rect.left}px`;
-      box.style.top = `${rect.top}px`;
-      box.style.width = `${rect.width}px`;
-      box.style.height = `${rect.height}px`;
+      outline(rect);
       panel.hidden = false;
       panel.innerHTML = render(report, resolver, el);
       place(rect);
       wireAxes(panel, resolver, el, onFlip);
       wireSource(panel);
     },
+    /**
+     * Move without re-rendering.
+     *
+     * Scrolling changes where the element is, not what it is styled with. Calling
+     * `show` for that rebuilt the panel's markup on every scroll event, which
+     * threw away any scroll position inside the panel itself.
+     */
+    reposition(rect) {
+      if (panel.hidden) return;
+      outline(rect);
+      place(rect);
+    },
     showError(message, rect) {
-      box.hidden = false;
-      box.style.left = `${rect.left}px`;
-      box.style.top = `${rect.top}px`;
-      box.style.width = `${rect.width}px`;
-      box.style.height = `${rect.height}px`;
+      outline(rect);
       panel.hidden = false;
       panel.innerHTML = `<header><span class="tag">xray</span></header><div class="error"><span class="label">Could not analyse this element. The page is unaffected.</span>${esc(
         message,

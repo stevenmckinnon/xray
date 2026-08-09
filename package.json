@@ -7,6 +7,9 @@
   "author": "Steven McKinnon",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "xray": "./dist/cli/main.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -42,7 +45,16 @@
     "theming"
   ],
   "peerDependencies": {
+    "playwright": "^1.40.0",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",
@@ -52,6 +64,7 @@
     "@changesets/cli": "^2.31.1",
     "@types/node": "^22.10.0",
     "esbuild": "^0.24.0",
+    "playwright": "^1.62.1",
     "typescript": "^5.7.0",
     "vite": "^7.0.0",
     "vitest": "^3.0.0"

@@ -13,15 +13,9 @@ import { colorDistance, parseColor } from './color.js';
 import { matchedRules, specifiedValue, type Collected, type SpecifiedValue } from './cssom.js';
 import { activeVariant, type TokenIndex, type TokenResolver } from './tokens.js';
 
-export type FindingKind =
-  | 'variant-locked'
-  | 'literal'
-  | 'off-scale'
-  | 'untokenized'
-  | 'unresolved'
-  | 'tokenized';
+import type { FindingKind, Severity } from '../shared/types.js';
 
-export type Severity = 'high' | 'medium' | 'low' | 'ok';
+export type { FindingKind, Severity };
 
 export interface VariantBreakdown {
   /** Axis label, e.g. `density` or `mode`. */

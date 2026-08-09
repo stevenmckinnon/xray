@@ -10,6 +10,9 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/client/**/*.ts", "src/shared/**/*.ts"],
+  // Tests are included so the type checker sees them too. Vitest only transpiles,
+  // so a test fixture that has drifted from the type it claims to build compiles
+  // and passes while asserting against a shape that no longer exists.
+  "include": ["src/client/**/*.ts", "src/shared/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

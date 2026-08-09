@@ -175,9 +175,57 @@ xray({
 });
 ```
 
+## In CI
+
+The overlay answers "what is wrong with this element". `xray record` answers "what
+is wrong with this app, and is it getting worse" — which is the question a build can
+act on.
+
+```bash
+xray record http://localhost:5173 --baseline xray.baseline.json
+```
+
+Exit `0` when nothing new appeared, `1` when it did, `2` when the sweep could not
+run at all. Create the baseline with `--update-baseline`, commit it, and every run
+afterwards compares against it:
+
+```
+New (1):
+  + LOCKED      src/Card.tsx:36
+      padding: 8px — 8px is --salt-spacing-100 at medium only.
+
+Failing: 1 new finding. Fix it, or re-record with --update-baseline.
+```
+
+The analysis needs a resolved cascade, so it needs a real browser. Playwright is an
+optional peer dependency — installed only if you use this command:
+
+```bash
+pnpm add -D playwright && pnpm exec playwright install chromium
+```
+
+Point it at a dev server running the plugin and it reuses the client already on the
+page; point it at a preview build or a static page and it injects the same bundle
+itself, so both paths report identically.
+
+**A baseline survives editing the files it describes.** Findings are compared by
+file, property, kind, token and value — deliberately not by line number. A baseline
+keyed on lines goes stale the moment someone adds an import, and a diff that reports
+every finding in a reformatted file as both removed and added is a diff nobody
+reads. Line numbers still travel in the report, as the place to look rather than as
+part of a finding's name.
+
+Useful flags: `--fail-on medium` to block on off-scale values too, `--wait <selector>`
+for an app that renders asynchronously, `--per-source` to analyse more than three
+elements per JSX line, and `--full` to print the whole report alongside the diff.
+`--help` lists them all.
+
 ## Limitations
 
 - **Vite dev server only.** No Next.js or webpack plugin yet.
+- `xray record` reports per source location, so a value hardcoded in a shared
+  component appears once against the component, not once per usage. That is usually
+  what you want, but it means a finding's element count is a sample, not a census.
 - Rules in cross-origin stylesheets are invisible, so a value they set may look untokenised. The panel warns when this applies. Token values are unaffected.
 - Container queries are collected but their conditions are not evaluated, so a rule inside one may be considered when it does not apply. Findings that depend on one are flagged.
 - `!important` inside `@layer` inverts layer order; xray does not model that inversion.
@@ -264,6 +312,8 @@ dependency is bumped.
 
 ```js
 __xray.inspect(document.querySelector(".card")); // ElementReport, no overlay needed
+__xray.record(); // sweep the page, aggregated by source location
+__xray.report(); // the same thing as text
 __xray.start();
 __xray.stop();
 ```

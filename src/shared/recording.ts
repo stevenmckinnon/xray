@@ -109,7 +109,7 @@ export interface RecordingDiff {
  * first and sums the element counts. The earliest location survives as the place
  * to start looking.
  */
-function collapse(findings: RecordedFinding[]): Map<string, RecordedFinding> {
+export function collapse(findings: RecordedFinding[]): Map<string, RecordedFinding> {
   const out = new Map<string, RecordedFinding>();
   for (const finding of findings) {
     const id = findingIdentity(finding);

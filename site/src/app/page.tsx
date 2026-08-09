@@ -8,6 +8,32 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 const REPO = "https://github.com/stevenmckinnon/xray";
 
+/**
+ * A labelled config snippet.
+ *
+ * There are two setups to show now, and the label is what stops the second block
+ * reading as a continuation of the first.
+ */
+function Snippet({ label, children }: { label: string; children: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="mono text-[11px] tracking-[0.14em] uppercase" style={{ color: "var(--text-faint)" }}>
+        {label}
+      </span>
+      <pre
+        className="mono overflow-x-auto rounded-[var(--radius-control)] p-4 text-[12px] leading-relaxed"
+        style={{
+          border: "1px solid var(--border-strong)",
+          background: "var(--surface-sunken)",
+          color: "var(--text-muted)",
+        }}
+      >
+        <code>{children}</code>
+      </pre>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <main>
@@ -310,32 +336,34 @@ export default function Home() {
       <section className="section shell">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-5">
-            <h2 className="section-title">Two lines, then a keystroke.</h2>
+            {/* Not "two lines" any more: the Next setup below it takes four, and
+                this page's whole character is not overstating things. */}
+            <h2 className="section-title">A few lines, then a keystroke.</h2>
             <CopyCommand
               manager="npm i"
               flags="-D"
               pkg="@stevenmckinnon/xray"
             />
-            <pre
-              className="mono overflow-x-auto rounded-[var(--radius-control)] p-4 text-[12px] leading-relaxed"
-              style={{
-                border: "1px solid var(--border-strong)",
-                background: "var(--surface-sunken)",
-                color: "var(--text-muted)",
-              }}
-            >
-              <code>{`// vite.config.ts
+            <Snippet label="Vite">{`// vite.config.ts
 import xray from '@stevenmckinnon/xray';
 
 export default defineConfig({
   plugins: [xray(), react()],
-});`}</code>
-            </pre>
+});`}</Snippet>
+            <Snippet label="Next.js">{`// next.config.ts
+import { withXray } from '@stevenmckinnon/xray/next';
+
+export default withXray({ /* your config */ });
+
+// app/layout.tsx — once, inside <body>
+import { Xray } from '@stevenmckinnon/xray/next/client';
+<Xray />`}</Snippet>
             <p className="prose-note">
-              The plugin is{" "}
-              <span className="mono">apply: &lsquo;serve&rsquo;</span>, so it
-              does not exist in a production build. The dev server prints the
-              binding on start, so you never have to guess it.
+              Neither integration exists in a production build. The Vite plugin
+              is <span className="mono">apply: &lsquo;serve&rsquo;</span>;{" "}
+              <span className="mono">withXray</span> returns your config
+              untouched outside development. The dev server prints the binding on
+              start, so you never have to guess it.
             </p>
             <div className="flex flex-wrap gap-3">
               <a className="btn btn-primary" href={REPO}>
@@ -348,10 +376,11 @@ export default defineConfig({
             <h2 className="section-title">The honest list.</h2>
             <dl className="limits">
               <div>
-                <dt>Vite dev server only</dt>
+                <dt>Vite and Next.js only</dt>
                 <dd>
-                  No Next.js or webpack plugin yet. This page loads the client
-                  bundle directly, which is the other way in.
+                  No standalone webpack or Rspack integration yet, though the
+                  Next loader is an ordinary webpack loader. This page loads the
+                  client bundle directly, which is the other way in.
                 </dd>
               </div>
               <div>

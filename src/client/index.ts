@@ -279,7 +279,9 @@ class Xray {
       this.overlay.hide();
       return;
     }
-    this.overlay.show(this.hovered, this.current.getBoundingClientRect(), this.current);
+    // `reposition`, not `show`: the report has not changed, and re-rendering it
+    // would discard the panel's own scroll position on every scroll event.
+    this.overlay.reposition(this.current.getBoundingClientRect());
   };
 
   private onResize = (): void => {

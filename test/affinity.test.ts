@@ -121,3 +121,34 @@ describe("veto keywords", () => {
     );
   });
 });
+
+describe('spacing scales named "space"', () => {
+  /**
+   * `--space-100` is as plain a spacing scale as `--spacing-100`. It used to score
+   * a weak hit worth 1, which can never clear `isPlausible`, so a system using
+   * that name had every padding reported as untokenised.
+   */
+  it('explains a padding', () => {
+    const ranked = rankScored('padding-left', ['--space-100', '--text-primary']);
+    expect(ranked[0]!.name).toBe('--space-100');
+    expect(isPlausible(ranked)).toBe(true);
+  });
+
+  it('explains a gap and a margin too', () => {
+    for (const prop of ['row-gap', 'column-gap', 'margin-top']) {
+      expect(isPlausible(rankScored(prop, ['--space-200'])), prop).toBe(true);
+    }
+  });
+
+  it('does not double-count a token named "spacing"', () => {
+    // "spacing" does not contain "space", so adding one keyword must not inflate
+    // the other's score.
+    const spacing = rankScored('padding-left', ['--spacing-100'])[0]!;
+    const space = rankScored('padding-left', ['--space-100'])[0]!;
+    expect(spacing.affinity).toBe(space.affinity);
+  });
+
+  it('still refuses a typographic token for a padding', () => {
+    expect(isPlausible(rankScored('padding-left', ['--font-size-100']))).toBe(false);
+  });
+});

@@ -13,7 +13,7 @@ import {
   shouldPreventDefault,
   type Chord,
 } from '../shared/hotkey.js';
-import type { ClientConfig, RuntimeConfig } from '../shared/types.js';
+import { AXIS_MIN_TOKENS, type ClientConfig, type RuntimeConfig } from '../shared/types.js';
 import { formatRecording, type FormatOptions, type Recording } from '../shared/recording.js';
 import { analyseElement, type ElementReport } from './analyse.js';
 import { collectRules, type Collected } from './cssom.js';
@@ -38,6 +38,12 @@ export interface Diagnostics {
   /** Firefox has historically not enumerated custom properties. */
   enumeratesCustomProperties: boolean;
   axes: { name: string; variants: string[]; tokens: number }[];
+  /**
+   * Conditions that look like axes but move too few tokens to clear
+   * `axisMinTokens`. Empty is the normal case; anything here is a candidate for
+   * lowering the option.
+   */
+  dismissedAxes: { name: string; variants: string[]; tokens: number }[];
   unreadableStylesheets: string[];
   shadowRoots: number;
 }
@@ -86,7 +92,7 @@ class Xray {
           // if you named it, we assume every token might depend on it.
           tokens: new Set(collected.tokenNames),
         }))
-      : discoverAxes(collected);
+      : discoverAxes(collected, this.options.axisMinTokens);
     this.resolver = new TokenResolver(collected, axes);
     if (this.current) this.render(this.current);
   }
@@ -210,9 +216,27 @@ class Xray {
         variants: a.variants.map((v) => v.label),
         tokens: a.tokens.size,
       })),
+      dismissedAxes: this.dismissedAxes(),
       unreadableStylesheets: collected.skippedSheets,
       shadowRoots: this.roots.size - (this.roots.has(document) ? 1 : 0),
     };
+  }
+
+  /**
+   * Axes the token threshold threw away.
+   *
+   * The threshold has to reject state classes, and nothing in a stylesheet tells a
+   * two-token dark mode apart from a two-token promo modifier. So rather than
+   * guess, say what was dismissed: a missed axis otherwise shows up as values
+   * reported as constant "drift", which looks like an answer rather than a gap.
+   */
+  private dismissedAxes(): { name: string; variants: string[]; tokens: number }[] {
+    if (this.options.axes) return []; // axes were configured; nothing was inferred
+    const collected = this.document;
+    const kept = new Set((this.resolver?.axes ?? []).map((a) => a.name));
+    return discoverAxes(collected, 1)
+      .filter((a) => !kept.has(a.name) && a.tokens.size < this.options.axisMinTokens)
+      .map((a) => ({ name: a.name, variants: a.variants.map((v) => v.label), tokens: a.tokens.size }));
   }
 
   private reinspect(): void {
@@ -391,6 +415,7 @@ function resolve(options: ClientConfig): RuntimeConfig {
     hotkeys: (options.hotkeys ?? ['mod+shift+x']).map((h) => (typeof h === 'string' ? parseHotkey(h) : h)),
     lengthTolerance: options.lengthTolerance ?? 1,
     colorTolerance: options.colorTolerance ?? 0.02,
+    axisMinTokens: options.axisMinTokens ?? AXIS_MIN_TOKENS,
   };
 }
 

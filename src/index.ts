@@ -4,6 +4,7 @@ import type { Plugin } from 'vite';
 import { injectSource } from './plugin/source-transform.js';
 import { formatHotkey, HotkeyError, parseHotkeys } from './shared/hotkey.js';
 import {
+  AXIS_MIN_TOKENS,
   DEFAULT_HOTKEY,
   type ClientConfig,
   type ResolvedOptions,
@@ -39,6 +40,7 @@ function resolveOptions(options: XrayOptions): ResolvedOptions {
     hotkeys,
     lengthTolerance: options.lengthTolerance ?? 1,
     colorTolerance: options.colorTolerance ?? 0.02,
+    axisMinTokens: options.axisMinTokens ?? AXIS_MIN_TOKENS,
   };
 }
 
@@ -77,6 +79,7 @@ export default function xray(options: XrayOptions = {}): Plugin {
         hotkeys: resolved.hotkeys,
         lengthTolerance: resolved.lengthTolerance,
         colorTolerance: resolved.colorTolerance,
+        axisMinTokens: resolved.axisMinTokens,
         axes: resolved.axes,
       };
       // The MutationObserver in the client catches sheets added at runtime, but

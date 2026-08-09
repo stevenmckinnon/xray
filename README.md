@@ -140,7 +140,7 @@ Matching is bucketed by the rightmost compound selector, the way a browser does 
 __xray.diagnose();
 // { rules: 134, tokensInScope: 1831, enumeratesCustomProperties: true,
 //   axes: [{ name: 'mode', variants: ['dark','light'], tokens: 182 }, …],
-//   unreadableStylesheets: [], shadowRoots: 1 }
+//   dismissedAxes: [], unreadableStylesheets: [], shadowRoots: 1 }
 ```
 
 Cross-origin stylesheets cannot be read. Rather than guess, xray says so: the panel shows a warning, and rules from those sheets are not considered. Token *values* still resolve correctly, because the browser resolves them — a `var()` pointing at a token declared only in an unreadable sheet is reported as fine, not as missing.
@@ -204,8 +204,29 @@ xray({
   lengthTolerance: 1, // px within which a literal counts as off-scale
   colorTolerance: 0.02, // OKLab distance for the same
   axes: null, // ['[data-mode=light]', '[data-mode=dark]'] etc, if discovery misses one
+  axisMinTokens: 3, // tokens a selector must move to count as an axis
 });
 ```
+
+Every option except `source` also works as a prop on `<Xray />` in Next.js.
+
+**`axisMinTokens`** is the one worth knowing about. A selector has to move at least
+this many tokens before it counts as a variant axis rather than a state class, and
+nothing in a stylesheet distinguishes a `.dark` block that moves two tokens from a
+`.promo` modifier that moves two. The default of 3 keeps xray quiet rather than
+wrong, but it means a small system's dark mode can go unnoticed — and a missed axis
+is worse than a gap, because values matching those tokens get reported as constant
+`drift` rather than locked.
+
+So it tells you. `__xray.diagnose().dismissedAxes` lists what the threshold threw
+away:
+
+```js
+__xray.diagnose().dismissedAxes;
+// [{ name: 'dark', variants: ['base', 'dark'], tokens: 2 }]
+```
+
+Anything in there and `axisMinTokens: 2` is probably right for your project.
 
 ## In CI
 

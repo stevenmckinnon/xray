@@ -28,6 +28,13 @@ export interface XrayProps {
   /** Class-name axes to probe. Leave unset and xray discovers them itself. */
   axes?: string[][];
   /**
+   * How many tokens a selector must move to count as a variant axis. Default 3.
+   *
+   * Lower it to 2 for a small system whose dark mode moves only a couple of
+   * tokens. `__xray.diagnose().dismissedAxes` says whether that applies to you.
+   */
+  axisMinTokens?: number;
+  /**
    * Run even in a production build.
    *
    * Off by default and rarely what you want. It exists because this project's own
@@ -36,7 +43,7 @@ export interface XrayProps {
   force?: boolean;
 }
 
-export function Xray({ hotkey, lengthTolerance, colorTolerance, axes, force }: XrayProps = {}): null {
+export function Xray({ hotkey, lengthTolerance, colorTolerance, axes, axisMinTokens, force }: XrayProps = {}): null {
   useEffect(() => {
     if (process.env.NODE_ENV === 'production' && !force) return;
 
@@ -48,6 +55,7 @@ export function Xray({ hotkey, lengthTolerance, colorTolerance, axes, force }: X
       ...(lengthTolerance === undefined ? {} : { lengthTolerance }),
       ...(colorTolerance === undefined ? {} : { colorTolerance }),
       ...(axes === undefined ? {} : { axes }),
+      ...(axisMinTokens === undefined ? {} : { axisMinTokens }),
     };
 
     import('../client.mjs')
@@ -66,7 +74,7 @@ export function Xray({ hotkey, lengthTolerance, colorTolerance, axes, force }: X
     return () => {
       cancelled = true;
     };
-  }, [hotkey, lengthTolerance, colorTolerance, axes, force]);
+  }, [hotkey, lengthTolerance, colorTolerance, axes, axisMinTokens, force]);
 
   return null;
 }

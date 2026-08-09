@@ -43,6 +43,8 @@ Every other token linter works on source text, so it can tell you that `padding:
 npm install -D @stevenmckinnon/xray
 ```
 
+**Vite:**
+
 ```ts
 // vite.config.ts
 import xray from "@stevenmckinnon/xray";
@@ -52,6 +54,33 @@ export default defineConfig({
 });
 ```
 
+**Next.js** takes two lines, because Next has no hook for injecting a script into
+the document the way Vite does:
+
+```ts
+// next.config.ts
+import { withXray } from "@stevenmckinnon/xray/next";
+
+export default withXray({
+  // your config
+});
+```
+
+```tsx
+// app/layout.tsx
+import { Xray } from "@stevenmckinnon/xray/next/client";
+
+// ...inside <body>, once:
+<Xray />;
+```
+
+`withXray` wires up the source transform so findings link back to the line of JSX
+that produced them; `<Xray />` boots the overlay and renders nothing. Options live
+on the component (`<Xray hotkey="alt+f8" />`).
+
+Verified on Next 16.3 with **both** dev bundlers — Turbopack, which is the default,
+and `next dev --webpack`. Requires Next 15 or later.
+
 `⇧⌘X` (`Ctrl+Shift+X` off Apple) to toggle. Hover to inspect, click to pin, `Esc` to release. The dev server prints the binding on start, so you never have to guess:
 
 ```
@@ -59,7 +88,10 @@ export default defineConfig({
   ➜  xray:    ⇧⌘X
 ```
 
-The plugin is `apply: 'serve'` — it does not exist in a production build.
+Neither integration exists in a production build. The Vite plugin is
+`apply: 'serve'`; `withXray` returns your config untouched outside development, and
+`<Xray />` loads the client through a dynamic import inside a `NODE_ENV` guard, so
+the branch folds away and the 85kB behind it is never bundled.
 
 ## What it reports
 
@@ -222,7 +254,8 @@ elements per JSX line, and `--full` to print the whole report alongside the diff
 
 ## Limitations
 
-- **Vite dev server only.** No Next.js or webpack plugin yet.
+- **Vite and Next.js only.** No standalone webpack or Rspack integration yet, though
+  the Next loader is an ordinary webpack loader and would work in one.
 - `xray record` reports per source location, so a value hardcoded in a shared
   component appears once against the component, not once per usage. That is usually
   what you want, but it means a finding's element count is a sample, not a census.

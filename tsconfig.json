@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023"],
+    // DOM is here for the Next.js component, which is the one file in this build
+    // that runs in a browser. tsc emits it, so it cannot live under the client's
+    // own config, which is noEmit.
+    "lib": ["ES2023", "DOM"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "rootDir": "src",
@@ -14,6 +17,12 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["src/index.ts", "src/cli/**/*.ts", "src/plugin/**/*.ts", "src/shared/**/*.ts"],
+  "include": [
+    "src/index.ts",
+    "src/cli/**/*.ts",
+    "src/next/**/*.ts",
+    "src/plugin/**/*.ts",
+    "src/shared/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "src/client"]
 }

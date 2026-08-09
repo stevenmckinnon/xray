@@ -14,9 +14,11 @@ import {
   type Chord,
 } from '../shared/hotkey.js';
 import type { ClientConfig, RuntimeConfig } from '../shared/types.js';
+import { formatRecording, type FormatOptions, type Recording } from '../shared/recording.js';
 import { analyseElement, type ElementReport } from './analyse.js';
 import { collectRules, type Collected } from './cssom.js';
 import { createOverlay, type OverlayHost } from './overlay.js';
+import { recordPage, type RecordOptions } from './record.js';
 import {
   discoverAxes,
   parentOf,
@@ -47,7 +49,7 @@ class Xray {
   private overlay: OverlayHost | null = null;
   private observer: MutationObserver | null = null;
   private current: Element | null = null;
-  private report: ElementReport | null = null;
+  private hovered: ElementReport | null = null;
   private pinned = false;
   private frame = 0;
   private refreshTimer = 0;
@@ -136,7 +138,7 @@ class Xray {
     this.active = false;
     this.pinned = false;
     this.current = null;
-    this.report = null;
+    this.hovered = null;
     cancelAnimationFrame(this.frame);
     clearTimeout(this.refreshTimer);
     document.removeEventListener('mousemove', this.onMove, true);
@@ -159,6 +161,38 @@ class Xray {
       lengthTolerance: this.options.lengthTolerance,
       colorTolerance: this.options.colorTolerance,
     });
+  }
+
+  /**
+   * Sweep the page and aggregate by source location.
+   *
+   * Works with the overlay off, which is what lets an E2E test or the CLI call it
+   * on a page nobody is looking at.
+   */
+  record(options: RecordOptions = {}): Recording {
+    if (!this.resolver) this.refresh();
+    return recordPage(
+      {
+        resolver: this.resolver!,
+        collectedFor: (el) => this.collectedFor(el),
+        analyseOptions: {
+          lengthTolerance: this.options.lengthTolerance,
+          colorTolerance: this.options.colorTolerance,
+        },
+      },
+      options,
+    );
+  }
+
+  /**
+   * `record()` as text, for reading in a console rather than parsing.
+   *
+   * Takes both sets of options: `perFile` shapes the output, everything else
+   * shapes the sweep, and passing the whole object to only one of them silently
+   * ignored half of it.
+   */
+  report(options: RecordOptions & FormatOptions = {}): string {
+    return formatRecording(this.record(options), { perFile: options.perFile });
   }
 
   /** What xray can and cannot see. The first thing to check when output looks wrong. */
@@ -189,13 +223,13 @@ class Xray {
     if (!this.overlay) return;
     if (!el.isConnected) {
       this.current = null;
-      this.report = null;
+      this.hovered = null;
       this.overlay.hide();
       return;
     }
     try {
-      this.report = this.inspect(el);
-      this.overlay.show(this.report, el.getBoundingClientRect(), el);
+      this.hovered = this.inspect(el);
+      this.overlay.show(this.hovered, el.getBoundingClientRect(), el);
     } catch (error) {
       // An overlay that throws must not take the app's event handling with it.
       this.overlay.showError(describeError(error), el.getBoundingClientRect());
@@ -240,12 +274,12 @@ class Xray {
 
   /** Scrolling moves the element, it does not change its styles. Do not re-analyse. */
   private onReposition = (): void => {
-    if (!this.current || !this.report || !this.overlay) return;
+    if (!this.current || !this.hovered || !this.overlay) return;
     if (!this.current.isConnected) {
       this.overlay.hide();
       return;
     }
-    this.overlay.show(this.report, this.current.getBoundingClientRect(), this.current);
+    this.overlay.show(this.hovered, this.current.getBoundingClientRect(), this.current);
   };
 
   private onResize = (): void => {

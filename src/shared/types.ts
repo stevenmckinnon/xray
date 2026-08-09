@@ -2,6 +2,36 @@
 
 import type { Chord } from './hotkey.js';
 
+/**
+ * What a finding is.
+ *
+ * Lives here rather than beside the analyser because the recording report and
+ * the baseline diff run in node, where the client's DOM-typed modules cannot be
+ * compiled. `analyse.ts` re-exports both, so this move is invisible to callers.
+ */
+export type FindingKind =
+  | 'variant-locked'
+  | 'literal'
+  | 'off-scale'
+  | 'untokenized'
+  | 'unresolved'
+  | 'tokenized';
+
+export type Severity = 'high' | 'medium' | 'low' | 'ok';
+
+/** Worst first. Used for sorting and for `--fail-on` thresholds. */
+export const SEVERITY_ORDER: Severity[] = ['high', 'medium', 'low', 'ok'];
+
+export function severityRank(severity: Severity): number {
+  const i = SEVERITY_ORDER.indexOf(severity);
+  return i === -1 ? SEVERITY_ORDER.length : i;
+}
+
+/** True when `severity` is at least as bad as `threshold`. */
+export function atLeast(severity: Severity, threshold: Severity): boolean {
+  return severityRank(severity) <= severityRank(threshold);
+}
+
 export interface XrayOptions {
   /**
    * Class-name axes to probe for variant-locking, e.g. `[['salt-density-high',

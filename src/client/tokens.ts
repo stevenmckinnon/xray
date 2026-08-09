@@ -126,14 +126,36 @@ export function activeVariant(el: Element, axis: Axis): Variant | null {
   return axis.variants.find((v) => v.kind === 'base') ?? null;
 }
 
-const CLASS_IN_SELECTOR = /\.(-?[_a-zA-Z\u00a0-\uffff][-\w\u00a0-\uffff]*)/g;
+/**
+ * A class in a selector, escape sequences included.
+ *
+ * Tailwind escapes the punctuation in its variant classes \u2014 `.md\:ms-4`,
+ * `.hover\:bg-red-500`, `.w-1\/2` \u2014 and a pattern that stops at the backslash
+ * reads those as classes called `md`, `hover` and `w-1`. Unrelated selectors then
+ * look like the same condition, which is how a page using Tailwind grew an `md`
+ * axis that does not exist anywhere in its stylesheet.
+ */
+const CLASS_IN_SELECTOR = /\.((?:\\.|[-_a-zA-Z\u00a0-\uffff])(?:\\.|[-\w\u00a0-\uffff])*)/g;
+
+/**
+ * `md\:ms-4` \u2192 `md:ms-4`.
+ *
+ * The escaped form is what a selector needs; the plain form is what `classList`
+ * needs. Only single-character escapes are unwound, which is what CSS tooling
+ * emits \u2014 a numeric escape like `\3a ` would survive as-is and simply fail to
+ * match, rather than matching the wrong thing.
+ */
+const unescapeClass = (name: string) => name.replace(/\\(.)/g, '$1');
 const ATTR_IN_SELECTOR = /\[\s*([-\w]+)\s*(?:([~^$*|]?=)\s*("[^"]*"|'[^']*'|[^\]\s]*))?\s*[iIsS]?\s*\]/g;
 
 /** The class and attribute conditions a selector imposes, as reusable fragments. */
 function conditionsIn(selector: string): Variant[] {
   const out: Variant[] = [];
   for (const m of selector.matchAll(CLASS_IN_SELECTOR)) {
-    out.push({ raw: `.${m[1]!}`, kind: 'class', name: m[1]!, value: null, label: m[1]! });
+    // `raw` keeps the escapes, because that is what `matches()` needs; `name` and
+    // `label` drop them, because that is what `classList` and a human need.
+    const plain = unescapeClass(m[1]!);
+    out.push({ raw: `.${m[1]!}`, kind: 'class', name: plain, value: null, label: plain });
   }
   for (const m of selector.matchAll(ATTR_IN_SELECTOR)) {
     const name = m[1]!;

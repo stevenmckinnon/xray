@@ -1,5 +1,48 @@
 # @stevenmckinnon/xray
 
+## 0.3.0
+
+### Minor Changes
+
+- 22c91d4: Stop reporting the wrong verdict when an axis moves only a couple of tokens.
+
+  A selector has to move at least three tokens to count as a variant axis, which
+  misses a small system's `:root`/`.dark` pair — and a missed axis is worse than a
+  gap, because values matching those tokens are reported as constant `drift` rather
+  than locked to a variant.
+
+  The threshold stays at three, because nothing in a stylesheet tells a two-token
+  dark mode apart from a two-token `.promo` modifier and this tool would rather be
+  quiet than wrong. Instead there is now `axisMinTokens` to lower it, and
+  `__xray.diagnose().dismissedAxes` to say what the current setting threw away, so
+  the trade is visible rather than silent.
+
+  Also: a spacing scale named `--space-100` now explains a padding. It scored a weak
+  keyword hit, which can never clear the plausibility bar, so systems using that name
+  had every padding reported as untokenised.
+
+- c708366: Add a Next.js integration.
+
+  `withXray(nextConfig)` from `@stevenmckinnon/xray/next` wires up the source
+  transform; `<Xray />` from `@stevenmckinnon/xray/next/client` boots the overlay.
+  Two pieces because Next has no hook for injecting a script into the document.
+
+  Verified on Next 16.3 with both dev bundlers — Turbopack, which is the default, and
+  `next dev --webpack`. Neither piece exists in a production build.
+
+### Patch Changes
+
+- 047adbf: Stop inventing axes from Tailwind's escaped class names.
+
+  Tailwind escapes the punctuation in its variant classes, and the selector parser
+  stopped at the backslash — reading `.md\\:ms-4` as a class called `md`, and
+  `.hover\\:bg-red-500` as `hover`. Unrelated selectors collapsed into one
+  condition, so a page using Tailwind could grow an axis that exists nowhere in its
+  stylesheet.
+
+  `diagnose().dismissedAxes` now lists only near misses rather than everything the
+  threshold rejected, which on a Tailwind page was dozens of single-token entries.
+
 ## 0.2.0
 
 ### Minor Changes

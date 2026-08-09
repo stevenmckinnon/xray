@@ -19,8 +19,13 @@ const ROUNDING = ['curve', 'corner', 'radius'];
 const AFFINITY: { props: RegExp; strong: string[]; weak: string[]; avoid?: string[] }[] = [
   {
     props: /^(padding|margin|row-gap|column-gap)/,
-    strong: ['spacing', 'padding', 'margin', 'gap', 'inset'],
-    weak: ['size', 'space'],
+    // `space` is strong, not weak. `--space-100` is as plain a spacing scale as
+    // `--spacing-100`, and a weak hit can never clear `isPlausible`, so a system
+    // using that name had every padding reported as untokenised. The two words are
+    // independent substrings — "spacing" does not contain "space" — so a token
+    // named `--spacing-100` is not counted twice.
+    strong: ['spacing', 'space', 'padding', 'margin', 'gap', 'inset'],
+    weak: ['size'],
     avoid: [...TYPOGRAPHIC, ...ROUNDING, 'border', 'stroke'],
   },
   {

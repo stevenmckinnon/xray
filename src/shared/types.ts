@@ -69,7 +69,36 @@ export interface XrayOptions {
 
   /** Max perceptual distance (ΔE-ish, OKLab) for a colour to count as near a token. Default 0.02. */
   colorTolerance?: number;
+
+  /**
+   * How many tokens a selector must move before it counts as a variant axis
+   * rather than a state class. Default 3.
+   *
+   * Lower it to 2 if your system is small enough that a real axis — a dark mode
+   * overriding only a foreground and a background — moves fewer tokens than a
+   * modifier would. `__xray.diagnose().dismissedAxes` lists what the current
+   * setting is throwing away.
+   */
+  axisMinTokens?: number;
 }
+
+/**
+ * How many tokens a condition must move before it counts as an axis rather than a
+ * state class or a one-off modifier. Real theming axes move tokens in bulk.
+ *
+ * Three is a judgement call, and it cuts both ways. A `:root` / `.dark` pair that
+ * moves only a foreground and a background is a real axis in a small design
+ * system, and missing it is worse than noise: values matching those tokens get
+ * reported as constant "drift" rather than locked to a variant, which is a
+ * confident wrong answer.
+ *
+ * It stays at three because nothing in a stylesheet distinguishes that pair from
+ * a `.promo` modifier that also moves two tokens, and this tool would rather be
+ * quiet than wrong. `axisMinTokens` lowers it for systems small enough to need
+ * that, and `diagnose()` lists what the threshold dismissed so the choice is
+ * visible rather than silent.
+ */
+export const AXIS_MIN_TOKENS = 3;
 
 export const DEFAULT_HOTKEY = 'mod+shift+x';
 
@@ -80,6 +109,7 @@ export interface ResolvedOptions {
   hotkeys: Chord[];
   lengthTolerance: number;
   colorTolerance: number;
+  axisMinTokens: number;
 }
 
 /**
@@ -94,6 +124,7 @@ export interface ClientConfig {
   hotkeys?: (Chord | string)[];
   lengthTolerance?: number;
   colorTolerance?: number;
+  axisMinTokens?: number;
 }
 
 /** ClientConfig after the client has filled in defaults. */
@@ -102,4 +133,5 @@ export interface RuntimeConfig {
   hotkeys: Chord[];
   lengthTolerance: number;
   colorTolerance: number;
+  axisMinTokens: number;
 }

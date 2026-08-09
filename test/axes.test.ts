@@ -137,3 +137,78 @@ describe('discoverAxes', () => {
     ]);
   });
 });
+
+describe('discoverAxes — small axes', () => {
+  /**
+   * The shape a Next.js fixture had: two real axes in one sheet, one of which
+   * overrides only two tokens. Missing it is not a cosmetic gap — every value
+   * matching one of those tokens is then reported as constant "drift" instead of
+   * locked to a variant, which is a confident wrong answer.
+   */
+  const twoAxisSheet = () =>
+    collected([
+      [
+        ':root',
+        {
+          '--space-100': '8px',
+          '--space-200': '16px',
+          '--radius-100': '4px',
+          '--text-primary': '#161616',
+          '--surface': '#ffffff',
+        },
+      ],
+      ['.dark', { '--text-primary': '#f0f0f0', '--surface': '#181818' }],
+      [
+        "[data-density='compact']",
+        { '--space-100': '4px', '--space-200': '8px', '--radius-100': '2px' },
+      ],
+      [
+        "[data-density='cosy']",
+        { '--space-100': '12px', '--space-200': '24px', '--radius-100': '6px' },
+      ],
+    ]);
+
+  it('finds the density axis in that sheet', () => {
+    const axes = discoverAxes(twoAxisSheet());
+    expect(axes.map((a) => a.name)).toContain('density');
+  });
+
+  it('dismisses a two-token dark axis by default', () => {
+    // Not a bug so much as a tie the stylesheet cannot break: this is the same
+    // shape as a `.promo` modifier moving two tokens, which must stay ignored.
+    // `diagnose().dismissedAxes` is what makes the choice visible.
+    const axes = discoverAxes(twoAxisSheet());
+    expect(axes.some((a) => a.variants.some((v) => v.raw === '.dark'))).toBe(false);
+  });
+
+  it('finds it once axisMinTokens is lowered', () => {
+    const axes = discoverAxes(twoAxisSheet(), 2);
+    const dark = axes.find((a) => a.variants.some((v) => v.raw === '.dark'));
+    expect(dark, `axes found: ${axes.map((a) => a.name).join(', ')}`).toBeDefined();
+    expect(dark!.variants.map((v) => v.label).sort()).toEqual(['base', 'dark']);
+    // And the other axis is still there, unaffected.
+    expect(axes.map((a) => a.name)).toContain('density');
+  });
+
+  it('still rejects a single-token state class at the lower setting', () => {
+    const axes = discoverAxes(
+      collected([
+        [':root', { '--a': '1px', '--b': '2px', '--c': '3px', '--opacity': '1' }],
+        ['.is-loading', { '--opacity': '0.5' }],
+      ]),
+      2,
+    );
+    expect(axes.some((a) => a.variants.some((v) => v.raw === '.is-loading'))).toBe(false);
+  });
+
+  it('still ignores a state class that moves a single token', () => {
+    // The threshold exists to reject these, and it must keep doing so.
+    const axes = discoverAxes(
+      collected([
+        [':root', { '--a': '1px', '--b': '2px', '--c': '3px', '--opacity': '1' }],
+        ['.is-loading', { '--opacity': '0.5' }],
+      ]),
+    );
+    expect(axes.some((a) => a.variants.some((v) => v.raw === '.is-loading'))).toBe(false);
+  });
+});

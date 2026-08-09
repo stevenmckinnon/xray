@@ -15,6 +15,7 @@
 
 import { parseColor, type Lab } from './color.js';
 import type { Collected } from './cssom.js';
+import { AXIS_MIN_TOKENS } from '../shared/types.js';
 
 /** Values no real token is likely to hold, used to detect "var() was invalid here". */
 const LENGTH_SENTINEL = '-97.31px';
@@ -202,7 +203,8 @@ function shortenLabels(variants: Variant[]): Variant[] {
  * declared under `:root` and `.dark` yields the dark-mode axis. No config, no
  * per-library adapters.
  */
-export function discoverAxes(collected: Collected): Axis[] {
+
+export function discoverAxes(collected: Collected, minTokens = AXIS_MIN_TOKENS): Axis[] {
   const byClassSet = new Map<string, Axis>();
 
   for (const [token, rules] of collected.declarationsByToken) {
@@ -252,10 +254,8 @@ export function discoverAxes(collected: Collected): Axis[] {
     }
   }
 
-  // A condition that only ever distinguishes one or two tokens is noise (a state
-  // class, a one-off modifier). Real theming axes move tokens in bulk.
   const real = [...byClassSet.values()]
-    .filter((a) => a.tokens.size >= 3)
+    .filter((a) => a.tokens.size >= minTokens)
     .sort((a, b) => b.tokens.size - a.tokens.size);
 
   return dedupeNames(mergeOverlapping(real));

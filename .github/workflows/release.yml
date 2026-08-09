@@ -77,15 +77,28 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # `npm publish` returns before the new version is reliably readable,
-          # and an install that runs too early resolves the old one and succeeds.
-          for _ in $(seq 1 30); do
-            npm view "@stevenmckinnon/xray@$VERSION" version >/dev/null 2>&1 && break
+          # Publishing returns before the version is reliably resolvable, so this
+          # has to wait — but it waits by retrying the real install rather than by
+          # asking a different question first.
+          #
+          # The first version polled `npm view`, which reported 0.2.0 as readable
+          # while `pnpm add` on the very next line still resolved 0.1.1. The runner
+          # is a fresh checkout with no pnpm cache, so this was not local staleness:
+          # `npm view` queries the registry API while pnpm fetches the full
+          # packument, and the packument is CDN-cached for longer. Asking a
+          # different client a different question proved nothing about the install
+          # that followed, so now the install itself is the check.
+          for attempt in $(seq 1 30); do
+            if pnpm add -D "@stevenmckinnon/xray@^$VERSION"; then
+              echo "site now depends on ^$VERSION"
+              exit 0
+            fi
+            echo "attempt $attempt: the registry has not caught up with $VERSION yet"
             sleep 5
           done
-          npm view "@stevenmckinnon/xray@$VERSION" version
 
-          pnpm add -D "@stevenmckinnon/xray@^$VERSION"
+          echo "::error::$VERSION never became resolvable to pnpm. It is published, so re-run this workflow or bump site/package.json by hand."
+          exit 1
 
       # This is the real check on the bump: the site's build copies the client
       # bundle out of the freshly installed package, so a release that breaks the

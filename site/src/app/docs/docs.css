@@ -1,0 +1,15 @@
+/* Fumadocs' theme, kept out of the landing page's stylesheet.
+
+   This has its own `@import 'tailwindcss'` because Fumadocs' preset uses `@apply`
+   with responsive utilities, which only resolve where Tailwind's context exists —
+   importing the preset alone into a route segment fails to compile.
+
+   The separation is not cosmetic. The landing page is xray's own fixture: it
+   declares exactly two variant axes and the demo depends on discovery finding
+   those two. Putting Fumadocs' variables in the same stylesheet added a `dark`
+   axis and a spurious `md` one, so the page stopped demonstrating the thing it
+   claims. */
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@source '../../../node_modules/fumadocs-ui/dist/**/*.js';

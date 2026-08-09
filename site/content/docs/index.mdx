@@ -1,0 +1,11 @@
+---
+title: What xray does
+description: A dev-time overlay that maps computed styles back to your design tokens.
+---
+
+Every other token linter works on source text, so it can tell you that
+`padding: 8px` isn't a `var()`. None of them can tell you that `8px` **is**
+`--salt-spacing-100`, that the token resolves to four different values across four
+densities, and that this element is therefore correct at exactly one of them.
+
+That needs the cascade resolved, which needs a browser.

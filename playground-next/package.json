@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 5400",
     "dev:webpack": "next dev --webpack --port 5401",
-    "build": "next build",
+    "build": "next build && node scripts/assert-no-client.mjs .next",
+    "build:webpack": "next build --webpack && node scripts/assert-no-client.mjs .next",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

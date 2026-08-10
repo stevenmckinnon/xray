@@ -1,0 +1,13 @@
+{
+  "title": "Docs",
+  "pages": [
+    "index",
+    "setup",
+    "what-it-reports",
+    "how-it-works",
+    "safety",
+    "ci",
+    "reference",
+    "changelog"
+  ]
+}

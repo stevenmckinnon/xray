@@ -1,0 +1,45 @@
+---
+title: Not breaking your app
+description: What xray does to your DOM, and what it admits it cannot see.
+---
+
+The tool has to insert nodes into your page to resolve tokens in context, which is
+exactly the sort of thing that quietly corrupts what it is measuring. So:
+
+- **Probes go inside the inspected element, never beside it.** A sibling changes
+  that element's own `:nth-child`/`:last-child` matching, which would corrupt the
+  values being read off it.
+- **Everything injected is `position: absolute`**, so it is not a flex or grid item
+  and adds no gap, no track and no reordering.
+- **Everything is removed in a `finally`.** The one path that must touch your DOM —
+  swapping a theme class on an ancestor, for a token declared with a selector only
+  that ancestor can match — is synchronous, so no frame is ever painted in the wrong
+  variant, and it is unwound even if something throws.
+- **A failure shows up as a message in the panel**, not as a broken page.
+
+Inspecting every element on the playground page, twice, produces zero layout
+differences and zero leftover nodes. The same holds for a full-page
+[`record()`](/docs/ci) sweep, which probes every element rather than one.
+
+## Trust and diagnostics
+
+```js
+__xray.diagnose();
+// { rules: 134, tokensInScope: 1831, enumeratesCustomProperties: true,
+//   axes: [{ name: 'mode', variants: ['dark','light'], tokens: 182 }, …],
+//   dismissedAxes: [], unreadableStylesheets: [], shadowRoots: 1 }
+```
+
+Cross-origin stylesheets cannot be read. Rather than guess, xray says so: the panel
+shows a warning and rules from those sheets are not considered.
+
+Token *values* are unaffected, because the browser resolves those — a `var()`
+pointing at a token declared only in an unreadable sheet is reported as fine, not
+as missing.
+
+## Shadow DOM
+
+Elements inside a shadow root are inspected with that root's own stylesheets, and
+the walk up to find a theme provider steps over shadow boundaries onto the host —
+so a web component's internals still resolve against the theme that wraps the
+component.

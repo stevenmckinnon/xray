@@ -127,3 +127,48 @@
   text-align: center;
   padding-inline: 6px;
 }
+
+/* ============================================================================
+   Syntax highlighting, bound to this site's theme rather than to `.dark`.
+
+   Shiki emits both palettes as `--shiki-light` and `--shiki-dark` on every span
+   and expects a `.dark` class on <html> to pick between them. This site has no
+   such class — theming is `[data-theme]`, and next-themes is deliberately off —
+   so nothing selected the dark palette and code blocks rendered in the *light*
+   theme's near-black text on a near-black background. Legible enough to look
+   deliberate in a screenshot, unreadable in practice.
+
+   The doubled `[data-theme]` is deliberate. The preset carries its own
+   `.shiki span` rule, which ties with a single-attribute selector on specificity
+   and wins on order — so the block, the `pre` and the `code` took the dark palette
+   while every span inside them stayed light. Repeating the attribute buys one more
+   point and settles it without `!important`.
+
+   Note the background is set on the block only, never on spans. Painting
+   `--shiki-dark-bg` onto each span put a dark panel behind light text and made the
+   plain-text blocks worse than before, at 1.63:1.
+   ========================================================================== */
+[data-theme='blueprint'][data-theme] .shiki,
+[data-theme='blueprint'][data-theme] .shiki span {
+  color: var(--shiki-dark);
+}
+
+[data-theme='blueprint'][data-theme] .shiki {
+  background-color: var(--shiki-dark-bg);
+}
+
+[data-theme='paper'][data-theme] .shiki,
+[data-theme='paper'][data-theme] .shiki span {
+  color: var(--shiki-light);
+}
+
+[data-theme='paper'][data-theme] .shiki {
+  background-color: var(--shiki-light-bg);
+}
+
+/* The block keeps the Shiki theme's own background rather than the page's sunken
+   surface. Forcing the page surface under these foregrounds looked tidier and read
+   worse: vitesse's colours are chosen against #ffffff and #121212, and on this
+   site's warm paper surface the median token contrast fell to 2.85:1. A code block
+   on its own surface is a normal thing for a docs page to have; unreadable syntax
+   is not. */

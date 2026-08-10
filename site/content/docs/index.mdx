@@ -1,11 +1,33 @@
 ---
 title: What xray does
-description: A dev-time overlay that maps computed styles back to your design tokens.
+description: A dev-time overlay that maps computed styles back to the design tokens they came from.
 ---
 
-Every other token linter works on source text, so it can tell you that
-`padding: 8px` isn't a `var()`. None of them can tell you that `8px` **is**
-`--salt-spacing-100`, that the token resolves to four different values across four
-densities, and that this element is therefore correct at exactly one of them.
+Hover any element in your running app and xray tells you which design tokens its
+**computed** styles map to — and which of those values only work in the theme,
+mode or density you happen to be looking at.
 
-That needs the cascade resolved, which needs a browser.
+<Panel />
+
+## Why a browser is involved
+
+Every other token linter works on source text. That is enough to tell you
+`padding: 8px` is not a `var()`.
+
+None of them can tell you that `8px` **is** `--salt-spacing-100`, that the token
+resolves to four different values across four densities, and that this element is
+therefore correct at exactly one of them. That needs the cascade resolved, and
+resolving the cascade needs a browser.
+
+<Callout title="This page is the fixture">
+  The site you are reading declares two real variant axes — theme and density, in
+  the sidebar — and leaves one component hardcoded on purpose. Press `⇧⌘X` on the
+  landing page and you are inspecting it with the tool it documents.
+</Callout>
+
+## Where to go next
+
+- [Setup](/docs/setup) — Vite and Next.js, plus the hotkey.
+- [What it reports](/docs/what-it-reports) — the five verdicts, and which ones matter.
+- [How it works](/docs/how-it-works) — why there is no config and no adapter for your design system.
+- [In CI](/docs/ci) — `xray record`, baselines, and exit codes.

@@ -7,6 +7,13 @@
       "runtimeArgs": ["vite", "--port", "5199", "--strictPort"],
       "port": 5199,
       "cwd": "playground"
+    },
+    {
+      "name": "xray-playground-next",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "--port", "5400"],
+      "port": 5400,
+      "cwd": "playground-next"
     }
   ]
 }

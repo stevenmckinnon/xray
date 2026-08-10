@@ -1,13 +1,24 @@
-# The playground joins the root package so both resolve one copy of Vite.
+# The playgrounds join the root package so all three resolve one copy of Vite.
 #
 # Two copies produced plugin types that were nominally incompatible — Vite's
 # EnvironmentPluginContainer has a private member, and TypeScript compares types
 # with private members by declaration identity — so `plugins: [xray()]` needed a
 # cast in the fixture while working fine for real consumers.
 #
+# Membership also means `workspace:*` instead of a hand-built tarball, so a fixture
+# exercises the working tree rather than whatever was last packed.
+#
 # `site/` is deliberately absent. It installs the *published* package so the live
 # demo runs exactly what a user would get, and having no build-time relationship
 # with this repo is what lets a static host build it with no configuration. Joining
 # the workspace would trade both of those for one fewer lockfile.
+#
+# `.` is the root package, and leaving it out was a real bug rather than a tidiness
+# question. Changesets resolves the packages a changeset names through the workspace
+# definition, so with only the playgrounds listed, every changeset for
+# `@stevenmckinnon/xray` failed with "which is not in the workspace". It stayed latent
+# until the first changeset landed after the workspace did.
 packages:
+  - .
   - playground
+  - playground-next

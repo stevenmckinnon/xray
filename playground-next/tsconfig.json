@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  // `.next/**/types` are generated, so they are absent on a clean checkout and in
+  // CI. Unmatched globs are not an error, and this file must type-check without
+  // having run `next dev` first.
+  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "xray-playground-next",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 5400",
+    "dev:webpack": "next dev --webpack --port 5401",
+    "build": "next build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stevenmckinnon/xray": "workspace:*",
+    "next": "^16.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

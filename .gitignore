@@ -1,5 +1,13 @@
 node_modules
 dist
+.next
 *.log
-.DS_Store
 *.tgz
+*.tsbuildinfo
+.DS_Store
+
+# Next rewrites this on every dev/build, pointing at whichever of `.next/types` or
+# `.next/dev/types` the last command produced — so a tracked copy is dirty half the
+# time. It is generated, `.next` is ignored anyway, and both playground-next and the
+# site type-check cleanly without it.
+next-env.d.ts

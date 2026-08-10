@@ -31,10 +31,17 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-      # The playground is a workspace member now, so one install covers it and it
-      # can be type-checked. It never was before, which is how `<shadow-card>` went
-      # untyped and the plugin's own config sat behind a cast.
+      # The playgrounds are workspace members, so one install covers them and they
+      # can be type-checked. The Vite one never was, which is how `<shadow-card>`
+      # went untyped and the plugin's own config sat behind a cast.
       - run: pnpm --filter xray-playground typecheck
+      - run: pnpm --filter xray-playground-next typecheck
+
+      # And built, which is not the same check. `tsc` is happy with a `next.config`
+      # that Turbopack refuses to compile — a wrong `outputFileTracingRoot` type-checks
+      # perfectly and then cannot resolve `next` itself. This is the step that runs
+      # `withXray` through a real bundler.
+      - run: pnpm --filter xray-playground-next build
 
       # A release needs either a changeset or a deliberate empty one. Catching
       # that on the PR is much cheaper than noticing after merge.

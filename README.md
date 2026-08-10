@@ -158,6 +158,7 @@ __xray.diagnose(); // what xray can and cannot see
 
 - [`site/`](site) is the marketing page and the docs, and it is also a fixture: it declares two real variant axes, loads this exact client bundle, and leaves one component hardcoded on purpose. Press `⇧⌘X` on it and you are inspecting the page with the tool it documents.
 - [`playground/`](playground) is where the engine is exercised against `@salt-ds/theme`, a shadcn-style `oklch()` sheet, a shadow root, and a cross-origin stylesheet.
+- [`playground-next/`](playground-next) is the same idea for App Router, and the only place `withXray` and `<Xray />` are exercised the way a consumer writes them. It found three engine bugs the unit tests did not.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) covers the release flow and the one-time setup behind it.
 
 MIT

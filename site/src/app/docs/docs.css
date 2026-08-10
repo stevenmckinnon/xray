@@ -107,3 +107,23 @@
   padding: 10px 2px 2px;
   border-top: 1px solid var(--border-hairline);
 }
+
+/* In a 232px sidebar these controls do not fit the way they fit in the nav: the
+   density group needs about 235px inline and was clipping at the column edge.
+   The label moves onto its own line and the pills share the row beneath it — the
+   same control, laid out for a narrow column rather than a wide one. */
+#nd-docs-layout .docs-instruments .instrument {
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+#nd-docs-layout .docs-instruments .instrument-label {
+  flex: 0 0 100%;
+  padding-block: 1px 3px;
+}
+
+#nd-docs-layout .docs-instruments .switch {
+  flex: 1;
+  text-align: center;
+  padding-inline: 6px;
+}

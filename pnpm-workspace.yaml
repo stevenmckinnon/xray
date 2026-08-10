@@ -1,0 +1,13 @@
+# The playground joins the root package so both resolve one copy of Vite.
+#
+# Two copies produced plugin types that were nominally incompatible — Vite's
+# EnvironmentPluginContainer has a private member, and TypeScript compares types
+# with private members by declaration identity — so `plugins: [xray()]` needed a
+# cast in the fixture while working fine for real consumers.
+#
+# `site/` is deliberately absent. It installs the *published* package so the live
+# demo runs exactly what a user would get, and having no build-time relationship
+# with this repo is what lets a static host build it with no configuration. Joining
+# the workspace would trade both of those for one fewer lockfile.
+packages:
+  - playground

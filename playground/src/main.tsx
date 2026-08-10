@@ -33,6 +33,20 @@ class ShadowCard extends HTMLElement {
 if (!customElements.get('shadow-card')) customElements.define('shadow-card', ShadowCard);
 
 /**
+ * Teach JSX about the custom element defined above.
+ *
+ * Nothing type-checked this directory until it gained a tsconfig, so `<shadow-card>`
+ * had been an untyped intrinsic element all along.
+ */
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'shadow-card': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    }
+  }
+}
+
+/**
  * Marketing-asset hook: `?xray-demo=<selector>` opens the overlay on that element
  * once the app has mounted, so a real screenshot can be captured headlessly.
  *

@@ -89,7 +89,7 @@ jobs:
           # different client a different question proved nothing about the install
           # that followed, so now the install itself is the check.
           for attempt in $(seq 1 30); do
-            if pnpm add -D "@stevenmckinnon/xray@^$VERSION"; then
+            if pnpm add -D --ignore-workspace "@stevenmckinnon/xray@^$VERSION"; then
               echo "site now depends on ^$VERSION"
               exit 0
             fi

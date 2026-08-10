@@ -7,28 +7,7 @@ Hover any element in your running app and xray tells you which design tokens its
 **computed** styles map to — and which of those values only work in the theme,
 mode or density you happen to be looking at.
 
-```
-button.hand-button                                    6 locked · 2 drift
-src/App.tsx:36:13
-
-mode     [dark] [light·]
-density  [high] [low] [medium·] [mobile] [touch]
-
-background-color  rgb(255, 255, 255)                            LOCKED
-  is --salt-container-primary-background at light only. That token
-  changes with mode — hardcoding it breaks dark.
-      dark    rgb(36, 37, 38)
-      light · rgb(255, 255, 255)
-
-height            28px                                          LOCKED
-  28px is --salt-size-base at medium only. This element is locked to
-  one density — it renders wrong at high, low, mobile, touch.
-      high     20px
-      low      36px
-      medium · 28px
-      mobile   44px
-      touch    44px
-```
+<Panel />
 
 ## Why a browser is involved
 

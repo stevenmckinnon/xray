@@ -1,7 +1,7 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import xray from "../dist/index";
 
 export default defineConfig({
-  plugins: [xray(), react()],
+  plugins: [xray() as PluginOption, react()],
 });

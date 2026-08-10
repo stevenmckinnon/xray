@@ -92,8 +92,10 @@ and `next dev --webpack`. Requires Next 15 or later.
 
 Neither integration exists in a production build. The Vite plugin is
 `apply: 'serve'`; `withXray` returns your config untouched outside development, and
-`<Xray />` loads the client through a dynamic import inside a `NODE_ENV` guard, so
-the branch folds away and the 85kB behind it is never bundled.
+`<Xray />` loads the client through a dynamic import inside a `NODE_ENV` guard, so the
+86kB behind it is never emitted. CI builds
+[`playground-next/`](playground-next) on both bundlers and searches the output for it,
+because an unfetched chunk is otherwise invisible.
 
 ## What it reports
 

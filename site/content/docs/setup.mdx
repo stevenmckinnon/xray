@@ -55,9 +55,24 @@ and `next dev --webpack`. Requires Next 15 or later.
 
 ## Neither integration ships to production
 
-The Vite plugin is `apply: 'serve'`. `withXray` returns your config untouched
-outside development. `<Xray />` loads the client through a dynamic import inside a
-`NODE_ENV` guard, so the branch folds away and the 85kB behind it is never bundled.
+The Vite plugin is `apply: 'serve'`. `withXray` returns your config untouched outside
+development. `<Xray />` loads the client through a dynamic import inside a `NODE_ENV`
+guard, and because that condition holds nothing a bundler cannot fold, the import is
+never walked for dependencies and the 86kB behind it is not emitted at all.
+
+This is checked rather than asserted. `playground-next` is built on both bundlers in
+CI and the output is searched for strings that only the client contains — the property
+is otherwise invisible, because an unfetched chunk changes nothing you can observe
+from the page.
+
+<Callout type="warn" title="There is no `force` option any more">
+  It used to exist, for running the overlay on a deployed site. A prop is a runtime
+  value, so the guard could no longer fold and the client was emitted as a 48kB lazy
+  chunk into *every* production build that rendered `<Xray />` — never fetched, but
+  shipped. To run the overlay on a deployed site, serve `dist/client.js` yourself and
+  call `__xrayClient.start()`. [This site does that](https://github.com/stevenmckinnon/xray/blob/main/site/src/app/layout.tsx),
+  which is why no option is needed for it.
+</Callout>
 
 ## The hotkey
 

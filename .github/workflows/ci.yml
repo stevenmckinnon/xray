@@ -41,7 +41,14 @@ jobs:
       # that Turbopack refuses to compile — a wrong `outputFileTracingRoot` type-checks
       # perfectly and then cannot resolve `next` itself. This is the step that runs
       # `withXray` through a real bundler.
+      #
+      # Both bundlers, because each catches a different half of the guard that keeps
+      # the client out of a production build: Turbopack notices a runtime value in the
+      # condition, webpack notices an `import()` after an early return. Each build
+      # ends in an assertion over its own output. ~4s and ~9s.
       - run: pnpm --filter xray-playground-next build
+      - run: rm -rf playground-next/.next
+      - run: pnpm --filter xray-playground-next build:webpack
 
       # A release needs either a changeset or a deliberate empty one. Catching
       # that on the PR is much cheaper than noticing after merge.

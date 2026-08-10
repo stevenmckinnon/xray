@@ -31,6 +31,11 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+      # The playground is a workspace member now, so one install covers it and it
+      # can be type-checked. It never was before, which is how `<shadow-card>` went
+      # untyped and the plugin's own config sat behind a cast.
+      - run: pnpm --filter xray-playground typecheck
+
       # A release needs either a changeset or a deliberate empty one. Catching
       # that on the PR is much cheaper than noticing after merge.
       - name: Changeset present

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "fumadocs-mdx",
+    "generate": "node scripts/changelog-page.mjs && fumadocs-mdx",
     "predev": "pnpm generate && node scripts/copy-client.mjs",
     "dev": "next dev --port 5300",
     "prebuild": "pnpm generate && node scripts/copy-client.mjs",

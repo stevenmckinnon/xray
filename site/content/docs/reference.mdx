@@ -1,0 +1,72 @@
+---
+title: Reference
+description: Options, the console API, source links, and the honest list of limitations.
+---
+
+## Options
+
+```ts
+xray({
+  hotkey: 'mod+shift+x', // string, array of strings, or false
+  source: true, // stamp data-xray-src on JSX
+  lengthTolerance: 1, // px within which a literal counts as off-scale
+  colorTolerance: 0.02, // OKLab distance for the same
+  axes: null, // ['[data-mode=light]', '[data-mode=dark]'], if discovery misses one
+  axisMinTokens: 3, // tokens a selector must move to count as an axis
+});
+```
+
+Every option except `source` also works as a prop on `<Xray />` in Next.js.
+
+### axisMinTokens
+
+A selector has to move at least this many tokens before it counts as a variant axis
+rather than a state class.
+
+The default of 3 keeps xray quiet rather than wrong, because nothing in a stylesheet
+distinguishes a `.dark` block that moves two tokens from a `.promo` modifier that
+moves two. But it means a small system's dark mode can go unnoticed — and a missed
+axis is worse than a gap, because values matching those tokens get reported as
+constant `drift` rather than locked.
+
+So it tells you:
+
+```js
+__xray.diagnose().dismissedAxes;
+// [{ name: 'dark', variants: ['base', 'dark'], tokens: 2 }]
+```
+
+Anything in there and `axisMinTokens: 2` is probably right for your project.
+
+## Console API
+
+```js
+__xray.inspect(document.querySelector('.card')); // one element, no overlay needed
+__xray.record(); // sweep the page, aggregated by source location
+__xray.report(); // the same thing as text
+__xray.diagnose(); // what xray can and cannot see
+__xray.start();
+__xray.stop();
+```
+
+## Source links
+
+The plugin stamps `data-xray-src="file:line:col"` onto DOM-producing JSX elements in
+development, which is what makes a finding actionable. React dropped
+`_debugSource` in 19, so xray adds its own attribute — narrowed to lowercase tags,
+so component props are never touched.
+
+Clicking the source line in the panel opens your editor through Vite's
+`/__open-in-editor`, the same endpoint React DevTools uses. If that is unavailable
+the path is copied to the clipboard instead.
+
+## Limitations
+
+- **Vite and Next.js only.** No standalone webpack or Rspack integration yet, though the Next loader is an ordinary webpack loader and would work in one.
+- Rules in cross-origin stylesheets are invisible, so a value they set may look untokenised. The panel warns when this applies. Token values are unaffected, because the browser resolves those.
+- Container queries are collected but their conditions are not evaluated, so a rule inside one may be considered when it does not apply. Findings that depend on one are flagged.
+- `!important` inside `@layer` inverts layer order; xray does not model that inversion.
+- Shorthands carrying a `var()` — `padding: 0 var(--x)` — cannot be split by the CSSOM, so they are reported against the shorthand rather than a side.
+- Flipping an axis is a DOM-level override, so a framework re-render will snap it back.
+- Only lengths and colours are analysed. Shadows, gradients, transitions and font stacks are not.
+- `xray record` reports per source location, so a finding's element count is a sample rather than a census.

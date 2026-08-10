@@ -1,0 +1,86 @@
+---
+title: Setup
+description: Install the plugin, add it to Vite or Next.js, and learn the binding.
+---
+
+```bash
+npm install -D @stevenmckinnon/xray
+```
+
+## Vite
+
+```ts title="vite.config.ts"
+import xray from '@stevenmckinnon/xray';
+
+export default defineConfig({
+  plugins: [xray(), react()],
+});
+```
+
+That is the whole setup. The plugin is `apply: 'serve'`, so it does not exist in a
+production build.
+
+## Next.js
+
+Next has no hook for injecting a script into the document the way Vite's
+`transformIndexHtml` does, so this takes two pieces.
+
+```ts title="next.config.ts"
+import { withXray } from '@stevenmckinnon/xray/next';
+
+export default withXray({
+  // your config
+});
+```
+
+```tsx title="app/layout.tsx"
+import { Xray } from '@stevenmckinnon/xray/next/client';
+
+// ...once, inside <body>:
+<Xray />;
+```
+
+`withXray` wires up the source transform, so findings link back to the line of JSX
+that produced them. `<Xray />` boots the overlay and renders nothing. Options go on
+the component: `<Xray hotkey="alt+f8" />`.
+
+Verified on Next 16.3 with **both** dev bundlers — Turbopack, which is the default,
+and `next dev --webpack`. Requires Next 15 or later.
+
+<Callout type="info" title="Automatic injection was possible on one bundler only">
+  Rewriting `config.entry` would inject the client on webpack, but Turbopack has no
+  equivalent — and an integration that silently does nothing on half of installs is
+  worse than one line in a layout file.
+</Callout>
+
+## Neither integration ships to production
+
+The Vite plugin is `apply: 'serve'`. `withXray` returns your config untouched
+outside development. `<Xray />` loads the client through a dynamic import inside a
+`NODE_ENV` guard, so the branch folds away and the 85kB behind it is never bundled.
+
+## The hotkey
+
+`⇧⌘X` toggles the overlay — `Ctrl+Shift+X` off Apple. Hover to inspect, click to
+pin, `Esc` to release.
+
+The dev server prints the binding on start, so you never have to guess it:
+
+```
+  ➜  Local:   http://localhost:5173/
+  ➜  xray:    ⇧⌘X
+```
+
+Bindings are parsed when the server starts, so a typo is an error you can see
+rather than a key that quietly does nothing.
+
+```ts
+xray({ hotkey: 'alt+f8' });
+xray({ hotkey: ['mod+shift+x', 'shift shift'] }); // several at once
+xray({ hotkey: false }); // console only, via __xray.start()
+```
+
+A chord matches modifier state exactly, so it will not swallow a longer
+combination. `shift shift` means tap the modifier twice, and only counts when the
+key is tapped alone — holding shift to type capitals never triggers it. Function
+keys may be used bare; letters may not.

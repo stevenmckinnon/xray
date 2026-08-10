@@ -1,0 +1,79 @@
+---
+title: How it works
+description: No adapter for your design system, and no token manifest to maintain.
+---
+
+There is no configuration because nothing here is configured. Four mechanisms do
+the work.
+
+## Tokens resolve by asking the browser
+
+The computed value of an unregistered custom property is the substituted token
+stream — `calc(0.5 * 8px)`, not `4px`. So instead of writing a calc evaluator and a
+unit resolver, xray hands the value back to the engine: a probe element declares
+`letter-spacing: var(--token)` and the computed length is read back.
+
+Anything the engine can resolve, xray can read — nested `var()` chains, `calc()`,
+`rem`, `em`, `oklch()`.
+
+Probes live *inside* the element being inspected, so every token resolves in that
+element's real cascade context.
+
+## Axes are discovered, not configured
+
+A token declared once is a constant. A token declared under several selectors with
+_different_ values varies — and the conditions those selectors disagree on **are**
+the axis.
+
+- `.salt-theme.salt-density-high` vs `.salt-theme.salt-density-medium` → a **density** axis. `.salt-theme` is common to both, so it is context, not axis.
+- `.salt-theme[data-mode=light]` vs `[data-mode=dark]` → a **mode** axis, from an attribute rather than a class.
+- `:root` vs `.dark` → a **dark** axis, where the bare `:root` block is the base variant.
+
+Verified against `@salt-ds/theme` — 1,831 tokens, five densities, `[data-mode]` —
+and a shadcn-style `:root`/`.dark` sheet in `oklch()`. Neither needed a line of
+config.
+
+<Callout type="warn" title="A small axis can be missed">
+  A selector has to move at least three tokens to count as an axis rather than a
+  state class, and nothing in a stylesheet distinguishes a `.dark` block that moves
+  two tokens from a `.promo` modifier that moves two. See
+  [`axisMinTokens`](/docs/reference#axismintokens) and
+  `diagnose().dismissedAxes`, which says what the threshold discarded.
+</Callout>
+
+## The cascade is modelled, not guessed
+
+`getComputedStyle` cannot tell you whether the author wrote `8px` or
+`var(--spacing-100)`, because it has already erased the difference.
+
+So xray collects every readable style rule, matches them against the element
+itself, and sorts by importance, origin, `@layer`, specificity and document order —
+which is the only way to recover what was actually authored.
+
+Matching is bucketed by the rightmost compound selector, the way a browser does it,
+so hovering an element does not test it against every rule in the document. That
+matters the moment you point this at a Tailwind dev build.
+
+## The token universe comes from the browser too
+
+`getComputedStyle` enumerates every custom property in scope for an element. That
+is stricter than harvesting names from parsed rules: it sees tokens declared in
+stylesheets xray is not allowed to read, tokens declared inside a shadow root, and
+it lists what is in scope *here* rather than everything declared anywhere.
+
+Engines that do not enumerate custom properties fall back to parsed names;
+`__xray.diagnose()` tells you which happened.
+
+## Naming the right token
+
+At medium density `8px` is `--salt-spacing-100`, `--salt-curve-200`,
+`--salt-size-unit` and a dozen others. Listing all of them is useless, so
+candidates are ranked by how well the name fits the property, and a match that
+fails the bar is reported as untokenised rather than as a wrong answer.
+
+## Flipping axes
+
+The variant chips in the panel are not a preview. Clicking one swaps the class or
+attribute on the owning ancestor, so the page genuinely re-renders in that variant.
+A framework re-render will snap it back, because it is a DOM-level override rather
+than state.

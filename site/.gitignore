@@ -10,3 +10,4 @@ hugeicons-migrate-backup-*
 .vercel
 .env*
 .source
+content/docs/changelog.mdx

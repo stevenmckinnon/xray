@@ -37,6 +37,8 @@ Every other token linter works on source text, so it can tell you that `padding:
 
 **[xray-styles.vercel.app](https://xray-styles.vercel.app)** runs xray on itself — the page has its own theme and density axes, so you can inspect it and watch it find them.
 
+📖 **[Documentation](https://xray-styles.vercel.app/docs)** — setup, the five verdicts, how discovery works, the CLI, and the changelog.
+
 ## Install
 
 ```bash

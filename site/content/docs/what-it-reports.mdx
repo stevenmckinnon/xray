@@ -1,0 +1,40 @@
+---
+title: What it reports
+description: Five verdicts, ranked by whether they can actually hurt you.
+---
+
+The interesting question is never "is this value in the scale". It is "would this
+value still be right in another theme, another density, another mode".
+
+| | |
+| --- | --- |
+| **locked** | The literal equals a token that _varies_ across a theme, mode or density axis. Correct in the variant you are viewing, wrong in the others. |
+| **off-scale** | Within a pixel, or perceptually within ΔE 0.02, of a token — but not equal to it. Close enough that nobody sees it, far enough to escape every theme. |
+| **drift** | Equals a token that never varies. Nothing breaks; it just will not follow the token when the token moves. |
+| **unresolved** | A `var()` pointing at a custom property that is not in scope at this element. The declaration is silently dropped, or the fallback renders. |
+| **ok** | Tokenised. |
+
+## Locked is the one that matters
+
+A literal that happens to equal a *constant* token is untidy. A literal that equals
+a token which *varies* is a bug that is currently invisible, because you are looking
+at the one variant where it happens to be correct.
+
+That is the whole reason this runs in a browser rather than over source text.
+
+## What it leaves alone
+
+Findings only appear for properties the author actually set. Browser defaults are
+not your problem, and reporting them is how a tool teaches people to ignore it.
+
+Per-side longhands collapse: four identical corners are one `border-radius` row,
+and `padding: 8px 16px` is two rows rather than four.
+
+## It refuses to guess
+
+Between 1px and 48px there are enough values that every literal collides with some
+token. `padding: 13px` equalling a `lineHeight` token is arithmetic, not intent.
+
+A match whose name has nothing to do with the property is reported as untokenised
+rather than as a bug — so `padding: 13px` equalling a `lineHeight` token stays
+quiet.

@@ -5,6 +5,7 @@ import { InspectTrigger } from "@/components/InspectTrigger";
 import { Panel } from "@/components/Panel";
 import { GithubIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
 
 const REPO = "https://github.com/stevenmckinnon/xray";
 
@@ -17,7 +18,10 @@ const REPO = "https://github.com/stevenmckinnon/xray";
 function Snippet({ label, children }: { label: string; children: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="mono text-[11px] tracking-[0.14em] uppercase" style={{ color: "var(--text-faint)" }}>
+      <span
+        className="mono text-[11px] tracking-[0.14em] uppercase"
+        style={{ color: "var(--text-faint)" }}
+      >
         {label}
       </span>
       <pre
@@ -48,7 +52,12 @@ export default function Home() {
               <Instruments />
             </span>
             <a className="btn" href={REPO}>
-              <HugeiconsIcon icon={GithubIcon} size={12} strokeWidth={2} aria-hidden="true" />
+              <HugeiconsIcon
+                icon={GithubIcon}
+                size={12}
+                strokeWidth={2}
+                aria-hidden="true"
+              />
               GitHub
             </a>
           </div>
@@ -362,13 +371,13 @@ import { Xray } from '@stevenmckinnon/xray/next/client';
               Neither integration exists in a production build. The Vite plugin
               is <span className="mono">apply: &lsquo;serve&rsquo;</span>;{" "}
               <span className="mono">withXray</span> returns your config
-              untouched outside development. The dev server prints the binding on
-              start, so you never have to guess it.
+              untouched outside development. The dev server prints the binding
+              on start, so you never have to guess it.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a className="btn btn-primary" href={REPO}>
+              <Link className="btn btn-primary" href="/docs">
                 Read the docs
-              </a>
+              </Link>
             </div>
           </div>
 

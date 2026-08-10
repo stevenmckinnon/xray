@@ -13,3 +13,97 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 @source '../../../node_modules/fumadocs-ui/dist/**/*.js';
+
+/* ============================================================================
+   Fumadocs, wearing this site's clothes.
+
+   Every `--color-fd-*` is redefined in terms of the page's own tokens, which are
+   declared in globals.css and switch with `[data-theme]`. So the docs follow the
+   blueprint/paper toggle in the nav rather than running a second theme system
+   next to it — which is also why `theme.enabled` is off in the layout: with the
+   colours coming from here, next-themes had nothing left to do but fight over the
+   `<html>` element.
+
+   These come after the imports on purpose. Fumadocs declares its defaults under
+   `:root` and `.dark`, both of which have the same specificity as the block
+   below, so document order is what decides — and being last is what makes this
+   work without `!important` anywhere.
+   ========================================================================== */
+:root {
+  --color-fd-background: var(--surface-page);
+  --color-fd-foreground: var(--text-primary);
+
+  /* `card` and `popover` are raised surfaces; `muted` and `secondary` are the
+     recessed ones Fumadocs uses for sidebars and code blocks. */
+  --color-fd-card: var(--surface-raised);
+  --color-fd-card-foreground: var(--text-primary);
+  --color-fd-popover: var(--surface-raised);
+  --color-fd-popover-foreground: var(--text-primary);
+  --color-fd-muted: var(--surface-sunken);
+  --color-fd-muted-foreground: var(--text-muted);
+  --color-fd-secondary: var(--surface-sunken);
+  --color-fd-secondary-foreground: var(--text-primary);
+
+  /* Hover and selected states in the sidebar. */
+  --color-fd-accent: var(--surface-raised);
+  --color-fd-accent-foreground: var(--text-primary);
+
+  --color-fd-primary: var(--text-accent);
+  --color-fd-primary-foreground: var(--text-on-accent);
+
+  --color-fd-border: var(--border-hairline);
+  --color-fd-ring: var(--border-accent);
+
+  /* The callout colours already exist here, as the verdict palette. Reusing them
+     means a warning in the docs is the same yellow as an off-scale finding in the
+     panel. */
+  --color-fd-error: var(--text-locked);
+  --color-fd-warning: var(--text-offscale);
+  --color-fd-info: var(--text-drift);
+  --color-fd-success: var(--text-ok);
+}
+
+/* Fumadocs ships its own stack; these are the three the rest of the site uses. */
+#nd-docs-layout,
+#nd-sidebar,
+#nd-toc {
+  font-family: var(--font-body);
+}
+
+#nd-docs-layout h1,
+#nd-docs-layout h2,
+#nd-docs-layout h3,
+#nd-docs-layout h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+#nd-docs-layout code,
+#nd-docs-layout kbd,
+#nd-docs-layout pre {
+  font-family: var(--font-mono);
+}
+
+/* The nav wordmark, matching the landing page's.
+
+   Not scoped to the sidebar: the notebook layout puts the nav title in
+   `#nd-subnav`, so a `#nd-sidebar` selector silently matched nothing and the mark
+   rendered in body serif. Scoping to the layout root covers both. */
+#nd-docs-layout .site-mark {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+#nd-docs-layout .site-mark span {
+  color: var(--text-accent);
+}
+
+/* The theme and density switches in the sidebar footer. They are the landing
+   page's own controls, so they only need room to breathe here. */
+#nd-docs-layout .docs-instruments {
+  padding: 10px 2px 2px;
+  border-top: 1px solid var(--border-hairline);
+}

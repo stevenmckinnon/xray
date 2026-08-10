@@ -1,5 +1,43 @@
 # @stevenmckinnon/xray
 
+## 0.4.0
+
+### Minor Changes
+
+- cb67189: **Breaking, narrowly:** the `force` prop is gone from `<Xray />`.
+
+  It was the reason the client ended up in production builds. `force` is a runtime
+  value, so `NODE_ENV === 'production' && !force` could not fold at build time, and
+  `dist/client.mjs` was emitted as a 48,338-byte lazy chunk plus two server files into
+  every production build that rendered `<Xray />`. Nothing ever fetched it — it was
+  absent from the build manifest — but it was shipped, and the README said it was not
+  bundled at all.
+
+  With the guard back to `NODE_ENV` alone, and the `import()` inside the branch rather
+  than after an early return, both bundlers emit nothing. Both halves are needed:
+  Turbopack drops it either way once the condition folds, webpack only drops it when the
+  import sits inside the dead block.
+
+  If you were using `force` to run the overlay on a deployed site, serve `dist/client.js`
+  yourself and call `__xrayClient.start()`. That is what this project's own site does,
+  and it needs no API here.
+
+  CI now builds `playground-next` on both bundlers and searches the output for strings
+  only the client contains, because an unfetched chunk is invisible from the page.
+
+### Patch Changes
+
+- 3d70a94: Check the Next.js fixture into the repo as `playground-next/`, and build it in CI.
+
+  No change to the published package. It is here because the throwaway version of this
+  app found three engine bugs that the unit tests did not — escaped class names read as
+  axis names, dismissed axes reported as noise, and `space` scoring as a weak affinity —
+  and none of them are reachable from a hand-written stylesheet in a test.
+
+  CI now type-checks _and_ builds it. Those are different checks: a wrong
+  `outputFileTracingRoot` type-checks perfectly and then stops Turbopack resolving
+  `next` at all.
+
 ## 0.3.0
 
 ### Minor Changes

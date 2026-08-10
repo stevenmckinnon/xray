@@ -58,7 +58,11 @@ jobs:
       # The site consumes the published package like any other dependency, so it
       # no longer needs the sibling build. That is also what lets Vercel build it
       # straight from the repo with no configuration.
-      - run: pnpm install --frozen-lockfile
+      # --ignore-workspace: a root pnpm-workspace.yaml governs every directory
+      # beneath it, and site is deliberately not a member. Without this pnpm
+      # installs the workspace instead and leaves site/node_modules empty, which
+      # surfaces later as a missing binary rather than as a failed install.
+      - run: pnpm install --frozen-lockfile --ignore-workspace
         working-directory: site
       # `pnpm typecheck`, not `tsc` directly: the docs collection is generated, and
       # the script is what guarantees it exists first.

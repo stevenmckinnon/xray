@@ -38,8 +38,8 @@ importers:
         version: 19.2.8(react@19.2.8)
     devDependencies:
       '@stevenmckinnon/xray':
-        specifier: ^0.2.0
-        version: 0.2.0(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
+        specifier: ^0.3.0
+        version: 0.3.0(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
       '@tailwindcss/postcss':
         specifier: ^4.1.0
         version: 4.3.3
@@ -1028,15 +1028,21 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@stevenmckinnon/xray@0.2.0':
-    resolution: {integrity: sha512-jV7PrS8vNZbu3c6eX4fGHG1BbDNMbd95NvkuRwbMa+jcQqoVDGc4v45G2yqwOQvWO6t1ovz5gOOmPpy2OMBNOg==}
+  '@stevenmckinnon/xray@0.3.0':
+    resolution: {integrity: sha512-kjtH+h/7P0mlxKJvrqGOhaEbZZ3I8LBhqKhBvlb42wKlDxMQu2NM+5bZ+ZlYsNGhfpKidEkU/3lkF3G3IDTK7w==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
+      next: '>=15.0.0'
       playwright: ^1.40.0
+      react: '>=18.0.0'
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0
     peerDependenciesMeta:
+      next:
+        optional: true
       playwright:
+        optional: true
+      react:
         optional: true
       vite:
         optional: true
@@ -3017,11 +3023,13 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@stevenmckinnon/xray@0.2.0(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))':
+  '@stevenmckinnon/xray@0.3.0(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))':
     dependencies:
       '@babel/parser': 7.29.8
       magic-string: 0.30.21
     optionalDependencies:
+      next: 16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react: 19.2.8
       vite: 7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0)
 
   '@swc/helpers@0.5.15':

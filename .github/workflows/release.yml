@@ -107,7 +107,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         working-directory: site
         run: |
-          pnpm exec tsc --noEmit
+          pnpm typecheck
           pnpm build
 
       - name: Commit the site bump

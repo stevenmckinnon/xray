@@ -55,7 +55,9 @@ jobs:
       # straight from the repo with no configuration.
       - run: pnpm install --frozen-lockfile
         working-directory: site
-      - run: pnpm exec tsc --noEmit
+      # `pnpm typecheck`, not `tsc` directly: the docs collection is generated, and
+      # the script is what guarantees it exists first.
+      - run: pnpm typecheck
         working-directory: site
       - run: pnpm build
         working-directory: site

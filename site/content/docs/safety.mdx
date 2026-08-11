@@ -8,7 +8,10 @@ exactly the sort of thing that quietly corrupts what it is measuring. So:
 
 - **Probes go inside the inspected element, never beside it.** A sibling changes
   that element's own `:nth-child`/`:last-child` matching, which would corrupt the
-  values being read off it.
+  values being read off it. The cost of that choice is the element's *own* children:
+  a probe is an element child, so for as long as one is present, `:last-child`,
+  `:nth-last-child` and `:only-child` match differently among them. Nothing outside
+  the inspected element moves.
 - **Everything injected is `position: absolute`**, so it is not a flex or grid item
   and adds no gap, no track and no reordering.
 - **Everything is removed in a `finally`.** The one path that must touch your DOM —
@@ -20,6 +23,26 @@ exactly the sort of thing that quietly corrupts what it is measuring. So:
 Inspecting every element on the playground page, twice, produces zero layout
 differences and zero leftover nodes. The same holds for a full-page
 [`record()`](/docs/ci) sweep, which probes every element rather than one.
+
+## How that is checked
+
+In a real browser, in CI, and by sampling the page *at the moment a probe is inserted*
+rather than afterwards. That distinction is the whole point: probes exist for
+microseconds inside a synchronous call, so nothing observing from outside — a
+MutationObserver, a rendered frame, an assertion after the call — can ever see the DOM
+while they are in it. An after-the-fact check passes no matter how badly the page was
+disturbed.
+
+The test intercepts `appendChild`, and at each insertion compares a style and layout
+signature for *every* element in the document against the state before. Two windows are
+allowed, and they are the two described above: the inspected element's own children may
+match structural pseudo-classes differently, and while a variant class is off an
+ancestor the whole page is in that variant. Everything else must be identical, every
+probe must be removed, and every attribute must be back.
+
+It is verified by breaking it. Insert probes as siblings, skip the disposal, or drop the
+class restore, and the relevant assertion fails — a test that has only ever passed is
+not yet evidence of anything.
 
 ## Trust and diagnostics
 

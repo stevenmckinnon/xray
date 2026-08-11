@@ -28,8 +28,26 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm test
+      # Before the tests, even though `pretest` builds too, so a broken build is
+      # reported as a broken build rather than as a failing test.
       - run: pnpm build
+
+      # The probe-safety invariants are checked in a real browser, because the
+      # failures they guard against are cascade and layout failures that jsdom
+      # cannot have. Chromium only — nothing here is engine-specific.
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # `pretest` builds first, so the browser test always runs against current
+      # source rather than whatever `dist` happened to hold.
+      #
+      # XRAY_REQUIRE_BROWSER turns "Chromium would not launch" from a skip into a
+      # failure. Locally the skip is right — a contributor who has only run
+      # `pnpm install` should not get an error they cannot act on — but in CI a
+      # silent skip would mean the invariants stopped being checked and nothing said
+      # so.
+      - run: pnpm test
+        env:
+          XRAY_REQUIRE_BROWSER: '1'
 
       # The playground is a workspace member now, so one install covers it and it
       # can be type-checked. It never was before, which is how `<shadow-card>` went

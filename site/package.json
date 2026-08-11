@@ -23,7 +23,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@stevenmckinnon/xray": "^0.4.0",
+    "@stevenmckinnon/xray": "^0.4.1",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/mdx": "^2.0.14",
     "@types/node": "^22.10.0",

@@ -68,6 +68,17 @@ jobs:
       - run: rm -rf playground-next/.next
       - run: pnpm --filter xray-playground-next build:webpack
 
+      # The tool pointed at its own playground: the Vite plugin stamps source
+      # locations, the client resolves tokens in a real browser, the CLI drives
+      # Playwright, and the recording is checked against what a working engine
+      # reports about a page built to be got wrong.
+      #
+      # Properties rather than a committed baseline. A baseline fails on any change
+      # whether or not it is a regression, and one recorded on a developer's machine
+      # can fail in CI for reasons that have nothing to do with this repository.
+      # Chromium is already installed above.
+      - run: pnpm guard:playground
+
       # A release needs either a changeset or a deliberate empty one. Catching
       # that on the PR is much cheaper than noticing after merge.
       - name: Changeset present

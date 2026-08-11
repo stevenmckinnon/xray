@@ -1,5 +1,86 @@
 # @stevenmckinnon/xray
 
+## 0.4.1
+
+### Patch Changes
+
+- aed6dc6: Point xray at its own playground in CI, and check what it reports.
+
+  End to end, with nothing mocked: the Vite plugin stamps source locations, the client
+  resolves tokens by probing a real browser, the CLI drives Playwright and writes a
+  recording, and ten expectations assert the recording says what a working engine would
+  say about a page built to be got wrong.
+
+  Properties rather than a committed baseline. A baseline fails on any change whether or
+  not it is a regression, and one recorded on a developer's machine can fail in CI for
+  reasons unrelated to the code. Each expectation names the regression it catches — two of
+  them cover bugs that unit tests missed and the fixtures found: locked spacing values,
+  which disappeared while `space` scored as a weak affinity, and axis discovery, which the
+  escaped class-name bug corrupted.
+
+  The interesting ones are the properties no unit test can reach: the same CSS class
+  resolves to a different token inside a nested density provider, and shadow-root content
+  is swept and attributed to the line where the custom element is used rather than to
+  where its internals were built.
+
+  Verified by breaking the engine three ways and confirming the right expectations fail —
+  disabling axis discovery trips five of the ten, skipping shadow roots trips exactly one.
+
+- a6293d1: Fix a false `locked` verdict on values whose token is pinned by a local override, and
+  stop the variant table coming from a different token than the message names.
+
+  Three bugs, one symptom. On the playground, `padding: 20px` inside
+  `.override { --salt-spacing-100: 20px }` was reported at high severity as "20px is
+  `--salt-spacing-250` at medium only … it renders wrong at high, low, mobile, touch". The
+  override pins the token to a literal, so that element renders identically at every
+  density and is correct everywhere.
+
+  - **The index cache could not see an override.** Its signature described which tokens
+    were in scope, not what they resolved to, so a subtree that _replaced_ a value without
+    changing the token count produced a signature identical to the theme's and reused the
+    theme's index. Overridable tokens — those declared by any rule that does not apply to
+    the whole document — now contribute their values, and a per-element signature cache
+    keeps that affordable.
+  - **Probing a variant discarded the override.** Values for other variants came from a
+    wrapper _inside_ the element carrying the axis owner's classes, which re-declared the
+    theme below the override. When a token is overridden between the element and where the
+    axis is declared, the variant is now applied to that ancestor instead — falling back to
+    `documentElement`, so a page sitting at the base variant still gets probed correctly.
+  - **The name and the evidence could disagree.** `variantBreakdown` tried every
+    exact-matching token and reported the first that moved, so the token in the message and
+    the "renders wrong at …" list could belong to different tokens. It now measures the
+    token it names, across every axis, rather than consulting the axis index — which also
+    catches tokens that vary only through an indirection, like a spacing scale defined as a
+    multiple of a density unit.
+
+  On the playground this corrects two findings from high severity to drift and fixes the
+  variant table on eight more; no finding is lost. Restricting the breakdown to the named
+  token without measuring turned 19 real locks into drift, so that path is measured
+  deliberately. A sweep costs about 20% more.
+
+- 2f0f981: Check the probe-safety invariants in a real browser, in CI.
+
+  These were verified by hand-pasting JavaScript into a console, which is a poor way to
+  guard the property the whole tool rests on: it inserts nodes into a live DOM and reads
+  computed styles back out. jsdom cannot check it, because the failures are cascade and
+  layout failures.
+
+  The test samples the page _at the moment a probe is inserted_, by intercepting
+  `appendChild`. That is the only state in which a violation exists — probes live for
+  microseconds inside a synchronous call, so an assertion afterwards passes no matter what
+  happened. It compares a style and layout signature for every element in the document,
+  and allows exactly two windows: structural pseudo-classes among the inspected element's
+  own children, and the whole page while a variant class is off an ancestor.
+
+  Verified by breaking it three ways — probes as siblings, disposal skipped, ancestor
+  class not restored — and confirming the right assertion fails each time.
+
+  Also documents the cost of putting probes inside the element, which the safety page
+  previously left out: for as long as a probe is present, `:last-child` and friends match
+  differently among that element's own children.
+
+  `pretest` now builds, so the browser test cannot pass against a stale bundle.
+
 ## 0.4.0
 
 ### Minor Changes

@@ -9,13 +9,35 @@ pnpm test
 pnpm typecheck
 ```
 
-The playground is the fixture the engine is developed against — Salt's theme, a
-shadcn-style `oklch()` sheet, a shadow root and a cross-origin stylesheet, in one
-page:
+Both playgrounds are workspace members, so the root `pnpm install` covers them. Do not
+run `npm install` inside either one — it builds a second, competing `node_modules`, and
+two copies of Vite is what made the plugin's own types incompatible with itself.
 
 ```bash
-cd playground && npm install && npm run dev
+pnpm --filter xray-playground dev              # Vite: Salt's theme, an oklch() sheet,
+                                               # a shadow root, a cross-origin sheet
+pnpm --filter xray-playground-next dev         # App Router, Turbopack
+pnpm --filter xray-playground-next dev:webpack # App Router, next dev --webpack
 ```
+
+## What checks what
+
+Three of these exist because unit tests could not have caught the bugs they found.
+
+| | |
+| --- | --- |
+| `pnpm test` | 185 unit tests, plus `probe-safety.browser.test.ts`, which drives Chromium. Skipped without a browser; set `XRAY_REQUIRE_BROWSER=1` to make the skip an error, as CI does. |
+| `pnpm guard:playground` | Points the CLI at the Vite playground and asserts what the recording says. Starts and stops the dev server itself. |
+| `pnpm --filter xray-playground-next build` | Asserts the client is absent from a production build. Run `build:webpack` too — the bundlers fail this differently. |
+
+`guard:playground` checks properties rather than comparing against a committed baseline.
+A baseline fails on any change, regression or not, and one recorded on a laptop can fail
+in CI for reasons unrelated to the code. Each expectation in
+`scripts/guard-playground.mjs` names the regression it catches; if you change a verdict
+deliberately, change the expectation and say why.
+
+When adding a check to any of the three, break the thing it guards and confirm it fails.
+Every one of these has, at some point, passed while checking nothing.
 
 ## Releasing
 

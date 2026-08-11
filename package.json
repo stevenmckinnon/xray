@@ -38,6 +38,8 @@
     "dev": "node scripts/build.mjs --watch",
     "pretest": "pnpm build",
     "test": "vitest run",
+    "preguard:playground": "pnpm build",
+    "guard:playground": "node scripts/guard-playground.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "changeset": "changeset",

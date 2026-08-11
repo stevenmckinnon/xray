@@ -22,7 +22,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Browser, Page } from 'playwright';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const CLIENT = fileURLToPath(new URL('../dist/client.js', import.meta.url));
 
@@ -64,13 +64,17 @@ const chromium = await (async () => {
 const FIXTURE = `<!doctype html>
 <html class="js no-touch dark">
 <head><style>
+  /* Four tokens on the density axis, not three. The override below declares
+     --space-100 as well, which is enough to stop discovery counting it towards the
+     axis — and with exactly three the axis then fell under AXIS_MIN_TOKENS and vanished,
+     taking the rest of this fixture's premise with it. */
   :root {
-    --space-100: 8px; --space-200: 16px; --radius-100: 4px;
+    --space-100: 8px; --space-200: 16px; --space-300: 24px; --radius-100: 4px;
     --text-primary: rgb(20, 20, 20); --surface: rgb(255, 255, 255); --border-subtle: rgb(221, 221, 221);
   }
   html.dark { --text-primary: rgb(240, 240, 240); --surface: rgb(18, 18, 18); --border-subtle: rgb(60, 60, 60); }
-  [data-density='compact'] { --space-100: 4px; --space-200: 8px; --radius-100: 2px; }
-  [data-density='cosy'] { --space-100: 12px; --space-200: 24px; --radius-100: 6px; }
+  [data-density='compact'] { --space-100: 4px; --space-200: 8px; --space-300: 12px; --radius-100: 2px; }
+  [data-density='cosy'] { --space-100: 12px; --space-200: 24px; --space-300: 36px; --radius-100: 6px; }
 
   body { margin: 0; font: 16px/1.5 system-ui; background: var(--surface); color: var(--text-primary); }
 
@@ -100,6 +104,12 @@ const FIXTURE = `<!doctype html>
      that checks the ancestor swap silently had nothing to check. */
   .subject { padding: 8px; border-radius: 4px; color: rgb(240, 240, 240); }
   .subject > span:last-child { text-decoration: underline; }
+
+  /* The component override hook every design system ships. --space-100 is pinned to a
+     literal here, so it no longer moves with density for anything in this subtree —
+     which makes .pinned's hardcoded 20px correct at every density, not locked to one. */
+  .override { --space-100: 20px; padding: var(--space-100); }
+  .override .pinned { padding: 20px; }
 </style></head>
 <body>
   <div class="card">
@@ -107,6 +117,7 @@ const FIXTURE = `<!doctype html>
       <button class="subject" type="button"><span>one</span><span>two</span></button>
       <ul><li>a</li><li>b</li><li>c</li></ul>
     </div>
+    <div class="override"><div class="pinned">pinned by a local override</div></div>
   </div>
 </body>
 </html>`;
@@ -154,8 +165,23 @@ describe.skipIf(!chromium)('probe safety, in a real browser', () => {
 
   beforeAll(async () => {
     browser = await chromium!.launch({ headless: true });
-    page = await browser.newPage();
+  }, 60_000);
 
+  afterAll(async () => {
+    await browser?.close();
+  });
+
+  /**
+   * A fresh page per test, not a shared one.
+   *
+   * The resolver memoises what a token resolves to under each variant, so on a shared
+   * page the second test to ask a question gets the answer without probing — and a test
+   * that counts probe insertions or class swaps then sees zero and reports it as a
+   * violation. Sharing was also a way for one test's leaked mutation to fail the next,
+   * which reads as a bug in the wrong place.
+   */
+  beforeEach(async () => {
+    page = await browser.newPage();
     // A real origin. `about:blank` and `data:` URLs give stylesheets an opaque origin,
     // and reading `cssRules` off one throws — which is the exact condition xray reports
     // as an unreadable stylesheet, so the fixture would test the degraded path instead
@@ -170,8 +196,8 @@ describe.skipIf(!chromium)('probe safety, in a real browser', () => {
     await page.evaluate(() => (window as never as { __xrayClient: { start(c: unknown): void } }).__xrayClient.start({ hotkeys: [] }));
   }, 60_000);
 
-  afterAll(async () => {
-    await browser?.close();
+  afterEach(async () => {
+    await page?.close();
   });
 
   it('sees the fixture as xray is meant to: two axes, readable stylesheets', async () => {
@@ -356,6 +382,38 @@ describe.skipIf(!chromium)('probe safety, in a real browser', () => {
     expect(result.swaps.length).toBeGreaterThan(0);
     expect(result.classAfter).toBe(result.before.class);
     expect(result.densityAfter).toBe(result.before.density);
+  });
+
+  /**
+   * The verdict this tool exists to produce, and the one it must not get wrong.
+   *
+   * `.pinned` hardcodes 20px inside a container that pins `--space-100` to 20px. Every
+   * density renders the same, so the value is drift — it will not follow the token —
+   * and it is emphatically not "locked to one density, renders wrong at the others".
+   *
+   * It used to say exactly that, at high severity, because the finding named the
+   * overridden token while taking its variant table from `--space-200`, which merely
+   * also holds 20px at the base density.
+   */
+  it('does not call a value locked when a local override pins its token', async () => {
+    const finding = await page.evaluate(() => {
+      const report = (
+        window as never as {
+          __xray: {
+            inspect(el: Element): {
+              findings: { prop: string; kind: string; tokens: string[]; severity: string; message: string }[];
+            };
+          };
+        }
+      ).__xray.inspect(document.querySelector('.pinned')!);
+      return report.findings.find((f) => f.prop.startsWith('padding')) ?? null;
+    });
+
+    expect(finding).not.toBeNull();
+    expect(finding!.tokens[0]).toBe('--space-100');
+    expect(finding!.kind).not.toBe('variant-locked');
+    expect(finding!.severity).not.toBe('high');
+    expect(finding!.message).not.toMatch(/renders wrong|locked to one/);
   });
 
   it('reports the hardcoded values as locked, on both axes', async () => {

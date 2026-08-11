@@ -465,6 +465,25 @@ const round = (n: number) => Math.round(n * 1000) / 1000;
 
 export class TokenResolver {
   private cache = new Map<string, TokenIndex>();
+  private overridable: string[] | null = null;
+  /**
+   * Memo for `acrossAxis`, keyed by scope as well as token and axis.
+   *
+   * Every finding now probes its named token under every variant, and a sweep
+   * analyses many elements that share one scope, so the same question is asked
+   * repeatedly. Keyed on the same signature as the index, which is what makes it
+   * safe: a local override changes the signature, so a scope with an override
+   * cannot read another scope's answer.
+   */
+  private variants = new Map<string, Map<string, string>>();
+  /**
+   * Signatures are read from live computed style, so they are not free — and with
+   * the override-sensitive tokens folded in, computing one costs more than the probe
+   * a memo lookup saves. Caching per element made the memo worth having instead of a
+   * pessimisation. Replaced wholesale on `invalidate`, since a WeakMap cannot be
+   * cleared and a stale signature would hand back another scope's answer.
+   */
+  private signatures = new WeakMap<Element, string>();
 
   constructor(
     private collected: Collected,
@@ -472,18 +491,74 @@ export class TokenResolver {
   ) {}
 
   /**
+   * Tokens whose value can differ between two elements in this document.
+   *
+   * A token declared only by rules that apply to the whole document — `:root`,
+   * `html`, `html.dark` — has one value everywhere, so it cannot tell two contexts
+   * apart. One declared anywhere else can: the component-level override hook that
+   * every design system ships (`.my-card { --spacing-100: 20px }`) is exactly this.
+   *
+   * Computed once, and usually tiny. It exists to keep the signature below cheap:
+   * fingerprinting *every* token would mean hundreds of reads per element, and
+   * fingerprinting none is the bug this replaces.
+   */
+  private overridableTokens(): string[] {
+    if (this.overridable) return this.overridable;
+    const root = document.documentElement;
+    const out: string[] = [];
+    for (const [token, rules] of this.collected.declarationsByToken) {
+      const local = rules.some((rule) => {
+        // A rule we could not evaluate might apply here and not there, so treat it
+        // as local rather than assume it is harmless.
+        if (rule.conditional) return true;
+        try {
+          return !root.matches(rule.selector);
+        } catch {
+          return true;
+        }
+      });
+      if (local) out.push(token);
+    }
+    this.overridable = out;
+    return out;
+  }
+
+  /**
    * A cheap fingerprint of "which theme context is this element in", used to
    * reuse an index across the (usually many) elements that share one.
+   *
+   * The token values matter, not just the token names. `count` was meant to catch
+   * a subtree that declares its own tokens, and it does — but an override *replaces*
+   * a value without changing the count, so a locally overridden token produced a
+   * signature identical to the theme's and reused the theme's index. On the
+   * playground that made `padding: 20px` inside `.override` report as
+   * `--salt-spacing-250` — the token that happens to hold 20px at the root — and
+   * then claim the element "renders wrong at high, low, mobile, touch", when the
+   * override pins it to 20px at every density. A false positive at high severity,
+   * in the verdict this tool exists to produce.
+   *
+   * `getPropertyValue` is used rather than a probe: custom properties inherit and
+   * can be read straight off the element, so this costs a string read each and needs
+   * no DOM insertion.
    */
   private signature(el: Element): string {
+    const cached = this.signatures.get(el);
+    if (cached !== undefined) return cached;
+    const computed = this.computeSignature(el);
+    this.signatures.set(el, computed);
+    return computed;
+  }
+
+  private computeSignature(el: Element): string {
     const parts: string[] = [];
     for (const axis of this.axes) {
       parts.push(`${axis.name}=${activeVariant(el, axis)?.raw ?? '-'}`);
     }
     const cs = getComputedStyle(el);
-    // `count` catches contexts the axes do not describe — a subtree that declares
-    // extra tokens, or an element inside a shadow root with its own sheet.
     parts.push(`fs=${cs.fontSize}`, `cs=${cs.colorScheme}`, `count=${cs.length}`);
+    for (const token of this.overridableTokens()) {
+      parts.push(`${token}=${cs.getPropertyValue(token)}`);
+    }
     return parts.join(';');
   }
 
@@ -526,6 +601,53 @@ export class TokenResolver {
     return index;
   }
 
+  /** What `token` resolves to at `el`, read through a probe in `el`'s own scope. */
+  private readInScope(el: Element, token: string): string {
+    const probe = makeProbeHost(el, [token]);
+    try {
+      return readProbe(probe.spans[0]!, token).value;
+    } finally {
+      probe.dispose();
+    }
+  }
+
+  /**
+   * Is `token` re-declared somewhere between `owner` and `el`?
+   *
+   * Custom properties inherit, so comparing the computed value at each end answers
+   * this without touching the DOM or walking a single rule.
+   */
+  private overriddenBelow(el: Element, owner: Element, token: string): boolean {
+    return getComputedStyle(el).getPropertyValue(token) !== getComputedStyle(owner).getPropertyValue(token);
+  }
+
+  /**
+   * Probe every variant but the current one by swapping the class on the owner.
+   *
+   * Synchronously, so no frame is ever painted in the wrong variant, and in a
+   * `finally` so a throw cannot leave the page stuck in it.
+   */
+  private swapAcross(
+    el: Element,
+    owner: HTMLElement,
+    current: Variant,
+    axis: Axis,
+    token: string,
+    out: Map<string, string>,
+  ): void {
+    for (const variant of axis.variants) {
+      if (variant.raw === current.raw) continue;
+      clearVariant(owner, current);
+      applyVariant(owner, variant);
+      try {
+        out.set(variant.raw, this.readInScope(el, token));
+      } finally {
+        clearVariant(owner, variant);
+        applyVariant(owner, current);
+      }
+    }
+  }
+
   /**
    * What this token resolves to under every value of an axis.
    *
@@ -535,9 +657,35 @@ export class TokenResolver {
    * a selector a nested element cannot match (`html.dark`, say).
    */
   acrossAxis(el: Element, token: string, axis: Axis): Map<string, string> {
+    const key = `${this.signature(el)}|${token}|${axis.name}`;
+    const memo = this.variants.get(key);
+    if (memo) return memo;
+
     const out = new Map<string, string>();
     const owner = this.axisOwner(el, axis);
     const current = owner ? activeVariant(owner, axis) : null;
+    this.variants.set(key, out);
+
+    // A local override between this element and wherever the axis is declared rules
+    // the nested probe out entirely: the wrapper below sits *inside* the element, so
+    // whatever variant it carries re-declares the token underneath the override and
+    // silently discards it. The variant has to be applied at or above the overriding
+    // scope for the override to survive, which means swapping on an ancestor.
+    //
+    // `documentElement` when there is no owner, because a page sitting at the base
+    // variant has nothing carrying the axis and still needs its other variants
+    // probed. Getting this wrong is what made `padding: 20px` inside
+    // `.override { --space-100: 20px }` report as locked to one density and "wrong at
+    // compact, cosy", when the override pins it to 20px at every density and the
+    // element renders correctly everywhere.
+    const target = owner ?? document.documentElement;
+    const here = current ?? activeVariant(target, axis);
+    if (here && this.overriddenBelow(el, target, token)) {
+      out.set(here.raw, this.readInScope(el, token));
+      this.swapAcross(el, target, here, axis, token, out);
+      return out;
+    }
+
     // Inside the element, not inside the theme provider: a component that
     // overrides a token locally (`--saltButton-height`, `--salt-spacing-100` on a
     // wrapper) must have that override reflected in every variant we report.
@@ -577,25 +725,7 @@ export class TokenResolver {
 
     // Re-declaring on a nested element did not move the value, so the token must
     // be declared against a selector only the ancestor can match (`html.dark`).
-    // Swap it on the real element instead — synchronously, so no frame is ever
-    // painted in the wrong variant, and in a finally so a throw cannot leave the
-    // page stuck in it.
-    for (const variant of axis.variants) {
-      if (variant.raw === current.raw) continue;
-      clearVariant(owner, current);
-      applyVariant(owner, variant);
-      try {
-        const probe = makeProbeHost(el, [token]);
-        try {
-          out.set(variant.raw, readProbe(probe.spans[0]!, token).value);
-        } finally {
-          probe.dispose();
-        }
-      } finally {
-        clearVariant(owner, variant);
-        applyVariant(owner, current);
-      }
-    }
+    this.swapAcross(el, owner, current, axis, token, out);
     return out;
   }
 
@@ -617,12 +747,9 @@ export class TokenResolver {
     return true;
   }
 
-  /** Which axes actually move this token. */
-  axesFor(token: string): Axis[] {
-    return this.axes.filter((a) => a.tokens.has(token));
-  }
-
   invalidate(): void {
     this.cache.clear();
+    this.variants.clear();
+    this.signatures = new WeakMap();
   }
 }

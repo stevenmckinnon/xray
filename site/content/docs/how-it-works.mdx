@@ -41,6 +41,32 @@ config.
   `diagnose().dismissedAxes`, which says what the threshold discarded.
 </Callout>
 
+## Whether a value is locked is measured, not looked up
+
+Discovery finds the axes from what stylesheets declare. Whether *this* value on *this*
+element is locked to one variant is a different question, and it is answered by probing:
+the token the finding names is resolved under every variant of every axis, in the
+element's own cascade context.
+
+That distinction matters twice.
+
+A token can vary without any two selectors disagreeing about it. Salt declares
+`--salt-spacing-100` once, as a multiple of a density unit, so no density selector
+contradicts another — yet it resolves to 4px at high and 8px at medium. Reading the
+declarations would call it constant; probing it does not.
+
+And a token can stop varying. The component override hook every design system ships —
+`.my-card { --spacing-100: 20px }` — pins the token to a literal for everything in that
+subtree, so a hardcoded `20px` inside it renders identically at every density. It is
+drift, not a lock. Probing at the element sees that; the axis's token list cannot.
+
+<Callout type="info" title="Only the token in the message is measured">
+  Several tokens often hold one value, and the finding names the best-fitting one.
+  Earlier versions took the variant table from whichever token happened to vary, so the
+  name and the "renders wrong at …" list could describe two different tokens. Both halves
+  now come from the same place.
+</Callout>
+
 ## The cascade is modelled, not guessed
 
 `getComputedStyle` cannot tell you whether the author wrote `8px` or

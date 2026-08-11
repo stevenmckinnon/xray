@@ -331,15 +331,36 @@ function tokenizedFinding(
   };
 }
 
-/** Which axes move any of these tokens, and how. */
+/**
+ * Does the token this finding names move along any axis, here?
+ *
+ * Two things about this are deliberate, and both were wrong before.
+ *
+ * **Only the named token.** This used to try every exact match and report the first
+ * that moved, which let the name and the evidence come from different tokens: `padding:
+ * 20px` inside `.override { --salt-spacing-100: 20px }` was reported as locked to
+ * medium and "wrong at high, low, mobile, touch" — the name from the overridden token,
+ * stable at every density in that scope, and the variant table from `--salt-spacing-250`,
+ * which merely also holds 20px at medium. The element renders correctly everywhere. A
+ * message whose two halves describe different tokens cannot be right about either.
+ *
+ * **Every axis, measured, rather than the axis index.** `axesFor` answers from
+ * stylesheet disagreement, which misses a token that varies only through an
+ * indirection: Salt declares `--salt-spacing-100` once, as a multiple of a density
+ * unit, so no two density selectors disagree about it and the index says no axis moves
+ * it — while its resolved value is 4px at high and 8px at medium. Probing the value
+ * under each variant is the thing that is actually being claimed, so it is the thing to
+ * measure.
+ */
 function variantBreakdown(
   el: Element,
   tokens: string[],
   resolver: TokenResolver,
   literal: string,
 ): VariantBreakdown | null {
-  for (const token of tokens) {
-    for (const axis of resolver.axesFor(token)) {
+  const named = tokens[0];
+  for (const token of named ? [named] : []) {
+    for (const axis of resolver.axes) {
       const resolved = resolver.acrossAxis(el, token, axis);
       if (new Set(resolved.values()).size < 2) continue;
 

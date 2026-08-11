@@ -142,15 +142,18 @@ const EXPECTATIONS = [
     },
   },
   {
-    name: 'a local token override is still resolved in place',
-    why: '.child gets 20px from a --salt-spacing-100 override on its parent. Which token name is reported is a judgement call the engine is allowed to change; that it resolves to a spacing token at all is not.',
-    check: (r) =>
-      has(r, {
-        kind: 'variant-locked',
-        prop: 'padding',
-        example: 'div.child',
-        token: (t) => typeof t === 'string' && t.includes('spacing'),
-      }) || 'no locked padding token on div.child',
+    name: 'a local override is resolved in place, and not called locked',
+    why: '.child gets 20px from a --salt-spacing-100 override on its parent, so it renders the same at every density. It must name the overridden token — not --salt-spacing-250, which merely also holds 20px at medium — and it must not claim the element renders wrong elsewhere. It used to do both, at high severity.',
+    check: (r) => {
+      const finding = r.findings.find((f) => f.example === 'div.child' && f.prop === 'padding');
+      if (!finding) return 'no padding finding on div.child at all';
+      const ok =
+        finding.token === '--salt-spacing-100' &&
+        finding.kind !== 'variant-locked' &&
+        finding.severity !== 'high' &&
+        finding.wrongIn.length === 0;
+      return ok || `${finding.severity} ${finding.kind} ${finding.token} wrongIn=${JSON.stringify(finding.wrongIn)}`;
+    },
   },
 ];
 

@@ -73,6 +73,14 @@ function ToggleGroup<T extends string>({
             // Roving tabindex: the group is one tab stop, arrows move within it.
             tabIndex={selected ? 0 : -1}
             className="switch"
+            // Which pill looks selected is decided by CSS from `<html data-theme>` /
+            // `data-density`, not from `aria-checked`. The attributes are right before
+            // the first paint; React only learns the restored value after hydrating, so
+            // styling on its state made the highlight visibly jump from the default to
+            // the saved one on every load. `aria-checked` still carries the truth for
+            // assistive tech — it is corrected a moment later, and it is not painted.
+            data-axis={label}
+            data-value={option}
             onClick={() => onChange(option)}
             onKeyDown={(event) => onKeyDown(event, index)}
           >

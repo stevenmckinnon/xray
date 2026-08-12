@@ -501,6 +501,46 @@ main {
   color: var(--text-ok);
 }
 
+/* The live report reaches verdicts the captured one never contained. `unresolved` is a
+   broken reference, so it borrows the locked red; `untokenized` is not a fault at all —
+   a value simply outside the system — so it stays in the muted default rather than
+   claiming a severity it does not have. */
+.badge[data-kind='unresolved'] {
+  color: var(--text-locked);
+}
+
+.badge[data-kind='untokenized'] {
+  color: var(--text-muted);
+}
+
+/* ============================================================================
+   Which of the two reports you are looking at
+   ========================================================================== */
+
+.panel-foot {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: var(--border-width-hairline) solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Live gets a lit dot. Deliberately small: the panel's job is to show the report, not
+   to celebrate being live. */
+.panel-foot[data-live]::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--text-ok);
+  vertical-align: 1px;
+}
+
 
 .variant-table {
   width: 100%;

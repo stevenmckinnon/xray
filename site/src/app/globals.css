@@ -513,6 +513,18 @@ main {
   color: var(--text-muted);
 }
 
+/* A restored theme should look like the page loaded that way, not like it changed its
+   mind. `body` animates background-color and color, and the restore script sets the
+   attribute during parse — which counts as a change, so the new theme fades in. This
+   holds every transition still until the restored colours have been painted; the script
+   drops `data-booting` two frames later and switching animates normally after that. */
+html[data-booting] *,
+html[data-booting] *::before,
+html[data-booting] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 /* ============================================================================
    Which of the two reports you are looking at
    ========================================================================== */

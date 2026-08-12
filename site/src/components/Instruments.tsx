@@ -2,8 +2,7 @@
 
 import { useRef } from 'react';
 
-import { DENSITIES, THEMES, setDensity, setTheme } from '@/lib/appearance';
-import { useDensity, useTheme } from '@/lib/useAppearance';
+import { DENSITIES, THEMES, setDensity, setTheme, useDensity, useTheme } from '@/lib/appearance';
 
 /**
  * A single-choice control, so it is a radio group.

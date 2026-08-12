@@ -2,8 +2,53 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, IBM_Plex_Mono, Newsreader } from 'next/font/google';
 import Script from 'next/script';
 
-import { DEFAULT_DENSITY, DEFAULT_THEME, RESTORE_SCRIPT } from '@/lib/appearance';
 import './globals.css';
+
+/**
+ * Restores the saved theme and density before the body is parsed, so the page is already
+ * correct at the first paint.
+ *
+ * Written out here as a literal rather than imported, for two reasons. It has to run
+ * before anything else, and every `next/script` strategy runs after the first paint. And
+ * this is a server component: Next refuses to pull any module importing
+ * `useSyncExternalStore` into the server graph, which `@/lib/appearance` does.
+ *
+ * `data-booting` is the part that matters for how this feels. `body` transitions
+ * background-color and color over 260ms, and changing the attribute here counts as a
+ * change — so without suppressing it the restored theme *animates* into place on load,
+ * which reads as a flash. The flag is dropped after two frames, by which point the
+ * restored colours have been painted, and normal switching animates as before.
+ *
+ * The valid values are duplicated from `@/lib/appearance`, which is the source of truth.
+ * A drift here means a saved choice silently fails to restore, not a broken page.
+ */
+const RESTORE_SCRIPT = `
+(function () {
+  try {
+    var root = document.documentElement;
+    var saved = JSON.parse(localStorage.getItem('xray-appearance') || '{}');
+    var changed = false;
+    if (['blueprint', 'paper'].indexOf(saved.theme) !== -1 && root.dataset.theme !== saved.theme) {
+      root.dataset.theme = saved.theme;
+      changed = true;
+    }
+    if (['tight', 'regular', 'loose'].indexOf(saved.density) !== -1 && root.dataset.density !== saved.density) {
+      root.dataset.density = saved.density;
+      changed = true;
+    }
+    if (changed) {
+      root.dataset.booting = '';
+      var clear = function () { delete root.dataset.booting; };
+      // Two frames is the accurate signal — by then the restored colours are painted.
+      // The timeout is the safety net: rAF does not run in a background tab, so a page
+      // opened in one would otherwise keep every transition suppressed until it was
+      // looked at. Whichever fires first wins; clearing twice is harmless.
+      requestAnimationFrame(function () { requestAnimationFrame(clear); });
+      setTimeout(clear, 300);
+    }
+  } catch (e) {}
+})();
+`.trim();
 
 /** Industrial signage grotesque, variable width — the spec-sheet voice. */
 const archivo = Archivo({
@@ -50,8 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      data-theme={DEFAULT_THEME}
-      data-density={DEFAULT_DENSITY}
+      data-theme="blueprint"
+      data-density="regular"
       className={`${archivo.variable} ${newsreader.variable} ${plexMono.variable}`}
       // Fumadocs' provider on /docs uses next-themes, which sets `color-scheme`
       // on this element from the client. Two theme systems own <html> — this
@@ -60,15 +105,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body>
-        {/*
-          Restores the visitor's theme and density before the body is parsed, so the
-          first paint is already correct. The attributes above are the server's default
-          and this overwrites them; `suppressHydrationWarning` on <html> covers the
-          difference, and `useSyncExternalStore` in the controls handles the rest.
-
-          Not a <Script>: every strategy Next offers runs after the first paint, which is
-          precisely too late.
-        */}
         <script dangerouslySetInnerHTML={{ __html: RESTORE_SCRIPT }} />
         {children}
         {/*

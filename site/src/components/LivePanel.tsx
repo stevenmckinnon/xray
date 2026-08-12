@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useDensity, useTheme } from '@/lib/useAppearance';
+import { useDensity, useTheme } from '@/lib/appearance';
 import { PanelView, type PanelFinding, type PanelReport } from './PanelView';
 
 /**

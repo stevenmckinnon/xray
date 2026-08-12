@@ -1,12 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 
-const THEMES = ['blueprint', 'paper'] as const;
-const DENSITIES = ['tight', 'regular', 'loose'] as const;
-
-type Theme = (typeof THEMES)[number];
-type Density = (typeof DENSITIES)[number];
+import { DENSITIES, THEMES, setDensity, setTheme, useDensity, useTheme } from '@/lib/appearance';
 
 /**
  * A single-choice control, so it is a radio group.
@@ -77,6 +73,14 @@ function ToggleGroup<T extends string>({
             // Roving tabindex: the group is one tab stop, arrows move within it.
             tabIndex={selected ? 0 : -1}
             className="switch"
+            // Which pill looks selected is decided by CSS from `<html data-theme>` /
+            // `data-density`, not from `aria-checked`. The attributes are right before
+            // the first paint; React only learns the restored value after hydrating, so
+            // styling on its state made the highlight visibly jump from the default to
+            // the saved one on every load. `aria-checked` still carries the truth for
+            // assistive tech — it is corrected a moment later, and it is not painted.
+            data-axis={label}
+            data-value={option}
             onClick={() => onChange(option)}
             onKeyDown={(event) => onKeyDown(event, index)}
           >
@@ -91,43 +95,23 @@ function ToggleGroup<T extends string>({
 /**
  * The page's own theme and density switches.
  *
- * These write `data-theme` / `data-density` onto `<html>`, the same mechanism a
- * real design system uses, and the same mechanism xray discovers. Flip density
- * and the page genuinely re-measures; nothing here is a mock.
+ * These write `data-theme` / `data-density` onto `<html>`, the same mechanism a real
+ * design system uses, and the same mechanism xray discovers. Flip density and the page
+ * genuinely re-measures; nothing here is a mock.
+ *
+ * State lives in `@/lib/appearance`, not here, because there is more than one of these
+ * on the page and more than one page in the app — and because xray's own overlay writes
+ * the same attributes. Every copy reads the DOM, so they cannot disagree, and mounting a
+ * new copy no longer resets what the last one chose.
  */
 export function Instruments() {
-  const [theme, setTheme] = useState<Theme>('blueprint');
-  const [density, setDensity] = useState<Density>('regular');
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
-  useEffect(() => {
-    document.documentElement.dataset.density = density;
-  }, [density]);
-
-  // The overlay writes these attributes too when you use its own chips, and there
-  // are two copies of this control on the page. Mirror the DOM so they agree.
-  useEffect(() => {
-    const root = document.documentElement;
-    const observer = new MutationObserver(() => {
-      const nextTheme = root.dataset.theme as Theme | undefined;
-      const nextDensity = root.dataset.density as Density | undefined;
-      if (nextTheme && THEMES.includes(nextTheme)) setTheme(nextTheme);
-      if (nextDensity && DENSITIES.includes(nextDensity)) setDensity(nextDensity);
-    });
-    observer.observe(root, { attributeFilter: ['data-theme', 'data-density'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const changeTheme = useCallback((next: Theme) => setTheme(next), []);
-  const changeDensity = useCallback((next: Density) => setDensity(next), []);
+  const theme = useTheme();
+  const density = useDensity();
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <ToggleGroup label="theme" options={THEMES} value={theme} onChange={changeTheme} />
-      <ToggleGroup label="density" options={DENSITIES} value={density} onChange={changeDensity} />
+      <ToggleGroup label="theme" options={THEMES} value={theme} onChange={setTheme} />
+      <ToggleGroup label="density" options={DENSITIES} value={density} onChange={setDensity} />
     </div>
   );
 }

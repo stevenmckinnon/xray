@@ -501,6 +501,58 @@ main {
   color: var(--text-ok);
 }
 
+/* The live report reaches verdicts the captured one never contained. `unresolved` is a
+   broken reference, so it borrows the locked red; `untokenized` is not a fault at all —
+   a value simply outside the system — so it stays in the muted default rather than
+   claiming a severity it does not have. */
+.badge[data-kind='unresolved'] {
+  color: var(--text-locked);
+}
+
+.badge[data-kind='untokenized'] {
+  color: var(--text-muted);
+}
+
+/* A restored theme should look like the page loaded that way, not like it changed its
+   mind. `body` animates background-color and color, and the restore script sets the
+   attribute during parse — which counts as a change, so the new theme fades in. This
+   holds every transition still until the restored colours have been painted; the script
+   drops `data-booting` two frames later and switching animates normally after that. */
+html[data-booting] *,
+html[data-booting] *::before,
+html[data-booting] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ============================================================================
+   Which of the two reports you are looking at
+   ========================================================================== */
+
+.panel-foot {
+  margin-top: 10px;
+  padding: 8px;
+  border-top: var(--border-width-hairline) solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Live gets a lit dot. Deliberately small: the panel's job is to show the report, not
+   to celebrate being live. */
+.panel-foot[data-live]::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--text-ok);
+  vertical-align: 1px;
+}
+
 
 .variant-table {
   width: 100%;
@@ -727,7 +779,18 @@ main {
   background: color-mix(in oklab, var(--text-primary) 8%, transparent);
 }
 
-.switch[aria-checked='true'] {
+/* The selected pill, matched against `<html>` rather than against `aria-checked`.
+
+   `aria-checked` comes from React, which does not know the restored theme until it has
+   hydrated — so styling on it meant the highlight rendered on the default and then
+   visibly jumped to the saved value on every load. These attributes are correct before
+   the first paint, so the right pill is lit from the start. Enumerated because a selector
+   cannot compare an ancestor's attribute value with the element's own. */
+html[data-theme='blueprint'] .switch[data-axis='theme'][data-value='blueprint'],
+html[data-theme='paper'] .switch[data-axis='theme'][data-value='paper'],
+html[data-density='tight'] .switch[data-axis='density'][data-value='tight'],
+html[data-density='regular'] .switch[data-axis='density'][data-value='regular'],
+html[data-density='loose'] .switch[data-axis='density'][data-value='loose'] {
   background: var(--surface-accent);
   color: var(--text-on-accent);
 }

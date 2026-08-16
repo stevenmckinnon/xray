@@ -1,5 +1,59 @@
 # @stevenmckinnon/xray
 
+## 0.4.2
+
+### Patch Changes
+
+- 8245265: Site: keep theme and density across the whole app, and make the demo panel a live report
+  of the page it is on.
+
+  The switches wrote `<html data-theme data-density>` and watched it for changes, so two
+  copies on one page agreed — but they never _read_ it at mount. Each fresh copy started
+  from hardcoded defaults and wrote those out in an effect, so arriving on /docs, where the
+  sidebar mounts its own copy, silently reset the page to blueprint/regular. Nothing was
+  persisted either, so a reload lost the choice.
+
+  The attributes are now the store, since three things write them — both copies of the
+  switches and xray's own overlay chips — and none of them can be the owner. Everything
+  subscribes through `useSyncExternalStore`, which is the one hook that reads external
+  state during hydration without lying about it. A small inline script restores the saved
+  choice before the first paint, so there is no flash of the default theme, and the
+  `storage` event keeps two open tabs together.
+
+  The demo panel was a report captured from the playground: real output, but frozen, and
+  about a different design system than the page it sat on. It now inspects this page's own
+  `.btn-forked` with the client the layout already loads, and re-inspects when you flip
+  either switch. Flip density to tight and `height: 36px` stops being `--control-height`
+  and the verdict changes from locked to untokenized; flip to paper and the hardcoded dark
+  background becomes off-scale. The captured report is still what the server renders and
+  what stays if the client never arrives, so the panel is never blank and never a spinner.
+
+- 3756f73: Site: give each of the four verdict cards a real, live example instead of prose alone,
+  and fix two messages that assumed context the reader did not have yet.
+
+  Each card in "Four verdicts, ranked by whether they can actually hurt you." now sits next
+  to a small box that is an actual element on the page, carrying an actual hardcoded value.
+  With the overlay open, hovering it gets the same report the panel above is already
+  showing — not a screenshot of one. All four were checked against the real engine at every
+  combination of the page's two axes before being written down:
+
+  - **locked** — `height: 36px`, exactly `--control-height` at blueprint/regular. Reads as
+    untokenized at the other two densities rather than something confusingly close, which is
+    why it isn't the same token the Bench section already uses.
+  - **off-scale** — `color: #7ed4fd`, 0.003 ΔE from `--text-accent`. Off-scale at every
+    density (color doesn't move with density here), falls back to a harmless untokenized on
+    paper theme rather than colliding with anything misleading.
+  - **drift** — `border-width: 1px`, exactly `--border-width-hairline`. Identical at every
+    combination of both axes, because the token itself never varies.
+  - **ok** — `padding: var(--spacing-2)`. Tokenized everywhere, trivially, since it is a
+    `var()` rather than a literal.
+
+  Also: the caption under the hero panel still described a captured Salt Design System
+  report after the panel became a live inspection of this page's own button, and the hint
+  under the Bench section told a reader to hover "with the overlay open" without saying how
+  to open it. Both now point at the `Inspect this page` control (click or shortcut)
+  explicitly.
+
 ## 0.4.1
 
 ### Patch Changes

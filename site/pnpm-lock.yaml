@@ -38,8 +38,8 @@ importers:
         version: 19.2.8(react@19.2.8)
     devDependencies:
       '@stevenmckinnon/xray':
-        specifier: ^0.4.1
-        version: 0.4.1(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
+        specifier: ^0.4.2
+        version: 0.4.2(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
       '@tailwindcss/postcss':
         specifier: ^4.1.0
         version: 4.3.3
@@ -1028,8 +1028,8 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@stevenmckinnon/xray@0.4.1':
-    resolution: {integrity: sha512-ih1RlOkL/6769vVQSzTdzrifbYxvzIE3M31zIq2fLVf6HWNwXLVnV3kc/xLvCmBObJ6e5QRwXqvgcScCboORiw==}
+  '@stevenmckinnon/xray@0.4.2':
+    resolution: {integrity: sha512-DTquUSXlg51JC3T5hAyuQr868tBAXvuKvgT5CF0Y8MHI5hU9OUuevoL7vmd/IC+bvnj4DWO14yXH6E1XsYcbjg==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
@@ -3023,7 +3023,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@stevenmckinnon/xray@0.4.1(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))':
+  '@stevenmckinnon/xray@0.4.2(next@16.3.0(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))':
     dependencies:
       '@babel/parser': 7.29.8
       magic-string: 0.30.21

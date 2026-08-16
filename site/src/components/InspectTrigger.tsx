@@ -17,6 +17,13 @@ declare global {
  * the label is a real button and the keycaps are demoted to what they are, a hint
  * that a shortcut also exists.
  *
+ * That the label is clickable used to be conveyed only by `.hint-action`'s own
+ * hover styling — an underline that stays transparent until the pointer arrives.
+ * Which means a reader who never hovers it, which is most readers scanning a page
+ * once, had no way to learn it was a button rather than a caption describing the
+ * keycaps next to it. The copy now says "click" and "or" outright, so the two ways
+ * in do not depend on someone finding the affordance first.
+ *
  * Two things are deliberately gated:
  *
  * The button only appears once the client bundle has actually loaded, so we never
@@ -56,7 +63,8 @@ export function InspectTrigger() {
           onClick={() => window.__xray?.start()}
           aria-label="Inspect this page with xray"
         >
-          <span className="hint-action-label">Inspect this page</span>
+          <span className="hint-action-label">Click to inspect this page</span>
+          <span aria-hidden="true">or press</span>
           <Shortcut />
         </button>
       ) : (

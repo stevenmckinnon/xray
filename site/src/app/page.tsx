@@ -3,6 +3,7 @@ import { CopyCommand } from "@/components/CopyCommand";
 import { Instruments } from "@/components/Instruments";
 import { InspectTrigger } from "@/components/InspectTrigger";
 import { Panel } from "@/components/Panel";
+import { VerdictSpecimen } from "@/components/VerdictSpecimen";
 import { GithubIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
@@ -99,12 +100,15 @@ export default function Home() {
             style={{ animationDelay: "260ms" }}
           >
             <Panel />
+            {/* The panel says whether it is live or captured (see PanelView's own
+                figcaption); this line is the invitation, not a repeat of that
+                status — everything on the page takes the same click. */}
             <p
               className="mono text-[10px] tracking-[0.12em] uppercase"
               style={{ color: "var(--text-faint)" }}
             >
-              Generated from the real tool. @salt-ds/theme, 1,831 tokens, five
-              densities.
+              Everything on this page reports the same way. Click Inspect this
+              page, or press the shortcut, and hover anything.
             </p>
           </div>
         </div>
@@ -137,10 +141,10 @@ export default function Home() {
             className="mono text-[11px]"
             style={{ color: "var(--text-faint)" }}
           >
-            Hover the Forked button with the overlay open and it reports all
-            five. The overlay owns your clicks while it is up, the way any
-            inspect mode does, so flip these axes from its own chips instead.
-            Esc hands the page back.
+            Click Inspect this page above, or press the shortcut, then hover
+            the Forked button — it reports all five. The overlay owns your
+            clicks while it is up, the way any inspect mode does, so flip
+            these axes from its own chips instead. Esc hands the page back.
           </p>
         </div>
       </section>
@@ -151,6 +155,12 @@ export default function Home() {
           <h2 className="section-title">
             Four verdicts, ranked by whether they can actually hurt you.
           </h2>
+          <p className="prose-note">
+            The example under each one is a real box on this page, not a
+            screenshot of one. Open the overlay above and hover it to get the
+            same verdict the panel is reporting on, live, from the token layer
+            these very cards are printed against.
+          </p>
         </div>
 
         {/*
@@ -169,6 +179,15 @@ export default function Home() {
               mode or density axis. Correct in the variant you are viewing.
               Wrong in the others, silently, until someone switches theme.
             </p>
+            <VerdictSpecimen
+              css={{
+                width: "var(--spacing-3)",
+                height: 36,
+                border: "var(--border-width-hairline) solid var(--border-strong)",
+                borderRadius: "var(--radius-control)",
+              }}
+              code="height: 36px"
+            />
             <table className="variant-table">
               <tbody>
                 <tr data-wrong="true">
@@ -203,13 +222,16 @@ export default function Home() {
               Perceptually within ΔE 0.02 of a token, but not equal to it. Close
               enough that nobody sees it, far enough to escape every theme.
             </p>
-            <div className="swatch-pair" aria-hidden="true">
-              <span className="swatch" style={{ background: "#fefefe" }} />
-              <span className="swatch" style={{ background: "#ffffff" }} />
-            </div>
-            <p className="card-example">
-              #fefefe, 0.003 from --salt-color-white
-            </p>
+            <VerdictSpecimen
+              css={{
+                width: "var(--spacing-3)",
+                aspectRatio: 1,
+                borderRadius: "var(--radius-control)",
+                color: "#7ed4fd",
+                background: "currentColor",
+              }}
+              code="color: #7ed4fd"
+            />
           </article>
 
           <article className="card">
@@ -221,9 +243,18 @@ export default function Home() {
               Equals a token that never varies. Nothing breaks today. It simply
               will not follow the token when the token moves.
             </p>
-            <p className="card-example">
-              1px, exactly --salt-size-divider-strokeWidth
-            </p>
+            <VerdictSpecimen
+              css={{
+                width: "var(--spacing-3)",
+                aspectRatio: 1,
+                borderRadius: "var(--radius-control)",
+                borderStyle: "solid",
+                borderWidth: 1,
+                borderColor: "var(--border-strong)",
+                boxSizing: "border-box",
+              }}
+              code="border-width: 1px"
+            />
           </article>
 
           <article className="card">
@@ -235,7 +266,17 @@ export default function Home() {
               Resolves through a token that is genuinely in scope. Reported too,
               so a clean element reads as clean rather than as silence.
             </p>
-            <p className="card-example">padding: 0 var(--salt-spacing-100)</p>
+            <VerdictSpecimen
+              css={{
+                width: "var(--spacing-3)",
+                aspectRatio: 1,
+                border: "var(--border-width-hairline) solid var(--border-strong)",
+                borderRadius: "var(--radius-control)",
+                padding: "var(--spacing-2)",
+                boxSizing: "border-box",
+              }}
+              code="padding: var(--spacing-2)"
+            />
           </article>
         </div>
 

@@ -951,6 +951,19 @@ html[data-density='loose'] .switch[data-axis='density'][data-value='loose'] {
   word-break: break-all;
 }
 
+/* A live box next to its caption, in each verdict card. See VerdictSpecimen.tsx —
+   the box is a real element carrying a real hardcoded value; the overlay reports
+   on it exactly as it would on anything else on the page. */
+.verdict-specimen-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.verdict-specimen {
+  flex: none;
+}
+
 /* ============================================================================
    Demo bench — the side-by-side that ends arguments
    ========================================================================== */

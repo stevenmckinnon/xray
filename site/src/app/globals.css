@@ -1148,7 +1148,6 @@ html[data-density='loose'] .switch[data-axis='density'][data-value='loose'] {
 
 .beat-body {
   color: var(--text-muted);
-  max-width: var(--measure);
   text-wrap: pretty;
 }
 
